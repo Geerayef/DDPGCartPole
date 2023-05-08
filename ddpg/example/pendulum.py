@@ -1,12 +1,13 @@
-import gym
+import gymnasium
 import numpy as np
 from ddpg import DDPG
 import tensorflow as tf
 import random, math, time
 
 def process_state(state):
-    (x, y, thetadot) = state
-    theta = math.atan2(y, x)
+    print(f"The state looks like this :\n - {state}")
+    (x, y, z), thetadot = state
+    theta = math.atan2(x, y)
     return (theta, thetadot)
 
 def new_ddpg():
@@ -19,7 +20,7 @@ def new_ddpg():
         memory_size=100000
     )
 
-env = gym.make('Pendulum-v1')
+env = gymnasium.make('Pendulum-v1', render_mode="rgb_array")
 ddpg = new_ddpg()
 
 if ddpg.load_weights("pendulum-model"):

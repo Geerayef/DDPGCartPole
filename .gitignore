@@ -47,4 +47,6 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-
+.nv/
+.keras/
+.bash_history

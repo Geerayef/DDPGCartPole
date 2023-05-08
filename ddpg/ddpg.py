@@ -2,12 +2,14 @@ import random
 import numpy as np
 
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, clone_model
-from tensorflow.keras.layers import Dense, Activation
-from tensorflow.keras.optimizers import Adam
+from tf.keras.models import Sequential, clone_model
+from tf.keras.layers import Dense, Activation
+from tf.keras.optimizers import Adam
 
 class DDPG:
-    def __init__(self, num_inputs, num_outputs, noise, actor_layers, critic_layers, memory_size, actor_lr=0.001, critic_lr=0.001):
+    def __init__(self, num_inputs, num_outputs
+                , noise, actor_layers, critic_layers
+                , memory_size, actor_lr=0.001, critic_lr=0.001):
         assert num_inputs > 0
         assert num_outputs > 0
         assert len(noise) == num_outputs

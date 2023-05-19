@@ -6,6 +6,7 @@ from tensorflow.keras.models import Sequential, clone_model
 from tensorflow.keras.layers import Dense, Activation
 from tensorflow.keras.optimizers import Adam
 
+
 class DDPG:
     def __init__(self, num_inputs, num_outputs, noise, actor_layers, critic_layers, memory_size, actor_lr=0.001, critic_lr=0.001):
         assert num_inputs > 0
@@ -49,7 +50,7 @@ class DDPG:
         self._memory_size = memory_size
         self._memory_index = 0
         self._previous_state = []
-    
+
     def load_weights(self, filename):
         try:
             self.actor.load_weights(filename + "-actor.h5")
@@ -59,7 +60,7 @@ class DDPG:
             return True
         except:
             return False
-    
+
     def save_weights(self, filename):
         self.actor.save_weights(filename + "-actor.h5")
         self.critic.save_weights(filename + "-critic.h5")

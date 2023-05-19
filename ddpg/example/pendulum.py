@@ -1,14 +1,19 @@
 import gymnasium
 import numpy as np
 from ddpg import DDPG
-import tensorflow as tf
-import random, math, time
+# import tensorflow as tf
+import math
+import time
+
 
 def process_state(state):
-    print(f"The state looks like this :\n - {state}")
-    (x, y, z), thetadot = state
-    theta = math.atan2(x, y)
+    if len(state) <= 2:
+        (x, y, thetadot), placeholder = state
+    else:
+        (x, y, thetadot) = state
+    theta = math.atan2(y, x)
     return (theta, thetadot)
+
 
 def new_ddpg():
     return DDPG(
@@ -17,10 +22,11 @@ def new_ddpg():
         noise=[0.01],
         actor_layers=[64, 32],
         critic_layers=[64, 32],
-        memory_size=100000
+        memory_size=100000,
     )
 
-env = gymnasium.make('Pendulum-v1', render_mode="rgb_array")
+
+env = gymnasium.make("Pendulum-v1", render_mode="rgb_array")
 ddpg = new_ddpg()
 
 if ddpg.load_weights("pendulum-model"):
@@ -43,7 +49,7 @@ while True:
 
     action = ddpg.action(state)
 
-    state, reward, done, info = env.step(2.0*action)
+    state, reward, terminate, truncated, info = env.step(2.0 * action)
     state = process_state(state)
 
     episode_steps += 1
@@ -52,17 +58,20 @@ while True:
     ddpg.feed(action, reward, state)
     ddpg.train()
 
-    if done:
-        print("Episode {} finished in {} steps, average reward = {}".format(
-            episode_count, episode_steps, episode_reward / episode_steps))
-        
+    if terminate or truncated:
+        print(
+            "Episode {} finished in {} steps, average reward = {}".format(
+                episode_count, episode_steps, episode_reward / episode_steps
+            )
+        )
+
         rewards[episode_count] += episode_reward / episode_steps
-        
+
         episode_count += 1
         episode_steps = 0
         episode_reward = 0
         locked_direction = 0
-        
+
         state = process_state(env.reset())
         ddpg.update_target_networks()
 

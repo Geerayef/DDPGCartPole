@@ -6,10 +6,11 @@ from tf.keras.models import Sequential, clone_model
 from tf.keras.layers import Dense, Activation
 from tf.keras.optimizers import Adam
 
+
 class DDPG:
     def __init__(self, num_inputs, num_outputs
-                , noise, actor_layers, critic_layers
-                , memory_size, actor_lr=0.001, critic_lr=0.001):
+                 , noise, actor_layers, critic_layers
+                 , memory_size, actor_lr=0.001, critic_lr=0.001):
         assert num_inputs > 0
         assert num_outputs > 0
         assert len(noise) == num_outputs

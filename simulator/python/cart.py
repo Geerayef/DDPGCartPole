@@ -1,17 +1,21 @@
 import math
 
+
 class Cart:
     width = 1.0
     cart_weight = 10.0
     pole_weight = 1.0
     pole_length = 1.0
+    # Cart
     position = (0.0, 0.0)
     speed = 0.0
     acceleration = 0.0
-    damping = 0
+    # Pole
     theta = 0.0
     theta_speed = 0.0
     theta_acceleration = 0.0
+
+    damping = 0
     theta_damping = 0
     actions_per_second = 20
     _time_since_action = 0.0
@@ -19,6 +23,14 @@ class Cart:
 
     def __init__(self):
         pass
+
+    def get_current_state(self):
+        return {
+            self.position,
+            self.speed,
+            self.theta,
+            self.theta_speed,
+        }
 
     def stop(self):
         self.speed = 0.0
@@ -78,14 +90,16 @@ class Cart:
 
         a = self.acceleration / self.pole_length * cos
         b = g / self.pole_length * sin
-        self.theta_acceleration = math.degrees(a + b) - self.theta_damping * self.theta_speed
+        self.theta_acceleration = (
+            math.degrees(a + b) - self.theta_damping * self.theta_speed
+        )
         self.theta_speed += self.theta_acceleration * dt
         self.theta += self.theta_speed * dt
         if self.theta < 180:
             self.theta += 360
         if self.theta >= 180:
             self.theta -= 360
-            
+
     def draw(self, canvas):
         (x, y) = self.position
         wheel = self.width / 10

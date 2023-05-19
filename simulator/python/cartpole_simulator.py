@@ -28,6 +28,7 @@ def cartpole_simulator():
     sum_fps = 0
     frame_count = 0
     avg_fps = 0
+
     while run:
         frame_count += 1
         dt = clock.get_time()
@@ -44,6 +45,7 @@ def cartpole_simulator():
         scenery.tick(dt / 1000.0)
 
         for event in pygame.event.get():
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     scenery.key_pressed("left")
@@ -68,18 +70,22 @@ def cartpole_simulator():
                         msg = "Converting video ..."
                         (width, height) = font.size(msg)
                         text = font.render(msg, True, (255, 255, 255))
-                        surface.blit(text, ((surface.get_width() - width) / 2, (surface.get_height() - height) / 2))
+                        surface.blit(
+                            text, ((surface.get_width() - width) / 2, (surface.get_height() - height) / 2))
                         pygame.display.update()
                         scenery.convert_recording(filename)
                 elif event.key == pygame.K_ESCAPE:
                     run = False
+
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     scenery.key_released("left")
                 elif event.key == pygame.K_RIGHT:
                     scenery.key_released("right")
+
             elif event.type == pygame.MOUSEMOTION:
                 scenery.mouse_move(event.pos)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     scenery.mouse_down(event.pos)
@@ -87,9 +93,11 @@ def cartpole_simulator():
                     scenery.mouse_wheel(1)
                 elif event.button == 5:
                     scenery.mouse_wheel(-1)
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     scenery.mouse_up()
+
             elif event.type == pygame.QUIT:
                 run = False
 
@@ -117,5 +125,5 @@ def cartpole_simulator():
     pygame.quit()
 
 
-if __name__ == '__main__':      
+if __name__ == '__main__':
     cartpole_simulator()

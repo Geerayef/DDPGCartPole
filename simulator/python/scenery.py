@@ -31,10 +31,14 @@ class Scenery:
         self._cart = Cart()
         self._cart.position = (-1.0, 0.0)
 
+    def get_current_state(self):
+        return self._cart.get_current_state()
+
     def reset(self):
         self._action = 0
         self._cart.reset()
         self._cart.position = (-1.0, 0.0)
+        return self.get_current_state()
 
     def switch_automatic(self):
         self._automatic = not self._automatic
@@ -45,7 +49,7 @@ class Scenery:
                 print("Failed to activate the planner: " + result)
         else:
             self._cart.planner_stop()
-        
+
     def key_pressed(self, key):
         if self._playing:
             return
@@ -105,7 +109,8 @@ class Scenery:
 
     def tick(self, time):
         if not self._frozen:
-            self._cart.tick(self._action * self._manual_force, self.gravity, time)
+            self._cart.tick(self._action * self._manual_force,
+                            self.gravity, time)
         if self._recording:
             self.save_frame()
         elif self._playing:
@@ -173,7 +178,7 @@ class Scenery:
         if self._p_data + 4 >= len(self._data):
             return float(0), True
         data = self._data[self._p_data:self._p_data + 4]
-        self._p_data += 4;
+        self._p_data += 4
         (value,) = struct.unpack("f", data)
         return value, False
 
@@ -210,7 +215,8 @@ class Scenery:
 
     def load_frame(self, current_time=None):
         if current_time is None:
-            current_time = float(pygame.time.get_ticks() - self._start_time) / 1000.0
+            current_time = float(pygame.time.get_ticks() -
+                                 self._start_time) / 1000.0
         frame_valid = False
         while self._playing and not frame_valid:
             time, eof = self.read_float()
@@ -259,7 +265,7 @@ class Scenery:
         try:
             subprocess.check_output("ffmpeg -version")
         except (OSError, subprocess.CalledProcessError) as e:
-            print("Cannot run ffmpeg!")
+            print(f"Cannot run ffmpeg! {e}")
             return
 
         f = open(filename, "rb")
@@ -302,7 +308,8 @@ class Scenery:
         while self._playing:
             self.load_frame(float(count) / float(fps))
             self.draw(canvas)
-            pygame.image.save(canvas.surface, "_" + str(count + 1).zfill(6) + ".png")
+            pygame.image.save(canvas.surface, "_" +
+                              str(count + 1).zfill(6) + ".png")
             count += 1
 
         (x, y) = canvas.get_size()

@@ -1,18 +1,12 @@
 import pygame
 import numpy as np
-import math
 import time
 from tkinter import Tk
 from .ddpg import DDPG
 from env.scenery import Scenery
+from util.flags import TRACE
 
-RENDER = False
-
-
-# def process_state(state):
-#     print(f"State looks like: {state}")
-#     posx, posy, car_vel, theta, thetadot = state
-#     return (posx, car_vel, theta, thetadot)
+RENDER = True
 
 
 def new_ddpg():
@@ -28,34 +22,35 @@ def new_ddpg():
 
 # ~  Simulator
 resolution = (1000, 300)
-
-Tk().withdraw()
 pygame.init()
 pygame.display.set_caption("Cart-pole simulator")
 surface = pygame.display.set_mode(resolution)
+scenery = Scenery(surface)
 clock = pygame.time.Clock()
 
-if pygame.font.match_font("Monospace", True):
-    font = pygame.font.SysFont("Monospace", 20, True)
-elif pygame.font.match_font("Courier New", True):
-    font = pygame.font.SysFont("Courier New", 20, True)
-else:
-    font = pygame.font.Font(None, 20)
+if RENDER:
+    Tk().withdraw()
 
-scenery = Scenery(surface)
+    if pygame.font.match_font("Monospace", True):
+        font = pygame.font.SysFont("Monospace", 20, True)
+    elif pygame.font.match_font("Courier New", True):
+        font = pygame.font.SysFont("Courier New", 20, True)
+    else:
+        font = pygame.font.Font(None, 20)
 
-run = True
-sum_dt = 0
-fps = 0
-sum_fps = 0
-frame_count = 0
-avg_fps = 0
+    sum_dt = 0
+    fps = 0
+    sum_fps = 0
+    frame_count = 0
+    avg_fps = 0
 
 # ~  Algorithm
+run = True
+
 agent = new_ddpg()
 
-if agent.load_weights("pendulum-model"):
-    print("Weights loaded.")
+if agent.load_weights("cartpole-model"):
+    print("~~~~~ Weights loaded.")
 
 episode_count = 0
 episode_steps = 0
@@ -66,34 +61,41 @@ n = 0
 
 scenery.reset()
 state = scenery.get_current_state()
+if TRACE:
+    print(f"~~~~~ Initial state: {state}")
 rewards = np.zeros(episodes)
 
 # Body
 while run:
-    frame_count += 1
     dt = clock.get_time()
-    sum_dt += dt
-    if dt > 0:
-        fps = 1000.0 / dt
-    sum_fps += fps
-    if sum_dt >= 100:
-        avg_fps = sum_fps / frame_count
-        sum_fps = 0
-        frame_count = 0
-        sum_dt = 0
+    if RENDER:
+        frame_count += 1
+        sum_dt += dt
+        if dt > 0:
+            fps = 1000.0 / dt
+        sum_fps += fps
+        if sum_dt >= 100:
+            avg_fps = sum_fps / frame_count
+            sum_fps = 0
+            frame_count = 0
+            sum_dt = 0
 
-    print(f"Pre-action state: {state}")
     action = agent.action(state)
 
     scenery._apply_action(action[0])
     scenery.tick(dt / 1000.0)
-    new_state, reward, terminated = scenery.post_action()
+    state, reward, terminated = scenery.post_tick()
 
     episode_steps += 1
     episode_reward += reward
 
-    agent.feed(action, reward, new_state)
+    agent.feed(action, reward, state)
     agent.train()
+
+    if TRACE:
+        print(f"~~~~~ Action: to apply: {action}")
+        print(f"~~~~~ Action: after applied: {scenery._action}")
+        print(f"~~~~~ State: after tick: {state}")
 
     if RENDER:
         scenery.draw()
@@ -115,7 +117,6 @@ while run:
             text_y += height
 
         pygame.display.update()
-        clock.tick(50)
 
     if terminated:
         print(
@@ -139,10 +140,11 @@ while run:
             if n >= repetitions:
                 break
 
-            print("Repetition", n)
+            print("~~~~~ Repetition", n)
             agent = new_ddpg()
             episode_count = 0
 
+    clock.tick(50)
     time.sleep(0.02)
 
 pygame.quit()
@@ -150,4 +152,4 @@ pygame.quit()
 for i in range(episodes):
     print(rewards[i] / n)
 
-agent.save_weights("pendulum-model")
+agent.save_weights("cartpole-model")

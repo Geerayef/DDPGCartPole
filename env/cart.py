@@ -1,4 +1,5 @@
 import math
+from util.flags import TRACE
 
 
 class Cart:
@@ -83,6 +84,9 @@ class Cart:
         self.speed += self.acceleration * dt
         x += self.speed * dt
         self.position = (x, y)
+        if TRACE:
+            print(f"DT {dt}")
+            print(f"New Cart Position: {self.position}")
 
         a = self.acceleration / self.pole_length * cos
         b = g / self.pole_length * sin
@@ -97,8 +101,8 @@ class Cart:
             self.theta -= 360
 
         self.terminated = bool(
-                self.position[0] > 10
-                or self.position[0] < -10
+                self.position[0] > 10.
+                or self.position[0] < -10.
                 )
 
     def draw(self, canvas):

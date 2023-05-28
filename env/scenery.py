@@ -1,12 +1,11 @@
-import pygame
-import numpy as np
-from .canvas import Canvas
-from .cart import Cart
 import os
 import struct
 import copy
 import glob
 import subprocess
+import pygame
+from .canvas import Canvas
+from .cart import Cart
 
 
 class Scenery:
@@ -35,11 +34,11 @@ class Scenery:
     def reset(self):
         self._action = 0
         self._cart.reset()
-        self._cart.position = (-1.0, 0.0)
+        self._cart.position = (0.0, 0.0)
 
     def get_current_state(self):
         return self._cart.get_current_state()
-        
+
     def switch_automatic(self):
         self._automatic = not self._automatic
         if self._automatic:
@@ -108,6 +107,9 @@ class Scenery:
             self._action = -1
 
     def tick(self, time):
+        if self._frozen:
+            self._frozen = False
+
         if not self._frozen:
             self._cart.tick(
                 self._action * self._manual_force,
@@ -119,8 +121,12 @@ class Scenery:
         elif self._playing:
             self.load_frame()
 
-    def post_action(self):
-        return self.get_current_state(), 1, self._cart.terminated
+    def post_tick(self):
+        reward = 1
+        if self._cart.terminated:
+            reward = -0.5
+
+        return self.get_current_state(), reward, self._cart.terminated
 
     def draw(self, canvas=None):
         active_canvas = canvas

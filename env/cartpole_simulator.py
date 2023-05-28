@@ -1,6 +1,6 @@
 import pygame
 from tkinter import filedialog, Tk
-from scenery import Scenery
+from .scenery import Scenery
 
 resolution = (1000, 300)
 

@@ -15,6 +15,7 @@ class Cart:
     theta_speed = 0.0
     theta_acceleration = 0.0
 
+    terminated = False
     damping = 0
     theta_damping = 0
     actions_per_second = 20
@@ -25,12 +26,7 @@ class Cart:
         pass
 
     def get_current_state(self):
-        return {
-            self.position,
-            self.speed,
-            self.theta,
-            self.theta_speed,
-        }
+        return self.position[0], self.speed, self.theta, self.theta_speed
 
     def stop(self):
         self.speed = 0.0
@@ -99,6 +95,11 @@ class Cart:
             self.theta += 360
         if self.theta >= 180:
             self.theta -= 360
+
+        self.terminated = bool(
+                self.position[0] > 10
+                or self.position[0] < -10
+                )
 
     def draw(self, canvas):
         (x, y) = self.position

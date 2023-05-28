@@ -1,0 +1,153 @@
+import pygame
+import numpy as np
+import math
+import time
+from tkinter import Tk
+from .ddpg import DDPG
+from env.scenery import Scenery
+
+RENDER = False
+
+
+# def process_state(state):
+#     print(f"State looks like: {state}")
+#     posx, posy, car_vel, theta, thetadot = state
+#     return (posx, car_vel, theta, thetadot)
+
+
+def new_ddpg():
+    return DDPG(
+        num_inputs=4,
+        num_outputs=1,
+        noise=[0.01],
+        actor_layers=[64, 32],
+        critic_layers=[64, 32],
+        memory_size=100000
+    )
+
+
+# ~  Simulator
+resolution = (1000, 300)
+
+Tk().withdraw()
+pygame.init()
+pygame.display.set_caption("Cart-pole simulator")
+surface = pygame.display.set_mode(resolution)
+clock = pygame.time.Clock()
+
+if pygame.font.match_font("Monospace", True):
+    font = pygame.font.SysFont("Monospace", 20, True)
+elif pygame.font.match_font("Courier New", True):
+    font = pygame.font.SysFont("Courier New", 20, True)
+else:
+    font = pygame.font.Font(None, 20)
+
+scenery = Scenery(surface)
+
+run = True
+sum_dt = 0
+fps = 0
+sum_fps = 0
+frame_count = 0
+avg_fps = 0
+
+# ~  Algorithm
+agent = new_ddpg()
+
+if agent.load_weights("pendulum-model"):
+    print("Weights loaded.")
+
+episode_count = 0
+episode_steps = 0
+episode_reward = 0
+episodes = 100
+repetitions = 1
+n = 0
+
+scenery.reset()
+state = scenery.get_current_state()
+rewards = np.zeros(episodes)
+
+# Body
+while run:
+    frame_count += 1
+    dt = clock.get_time()
+    sum_dt += dt
+    if dt > 0:
+        fps = 1000.0 / dt
+    sum_fps += fps
+    if sum_dt >= 100:
+        avg_fps = sum_fps / frame_count
+        sum_fps = 0
+        frame_count = 0
+        sum_dt = 0
+
+    print(f"Pre-action state: {state}")
+    action = agent.action(state)
+
+    scenery._apply_action(action[0])
+    scenery.tick(dt / 1000.0)
+    new_state, reward, terminated = scenery.post_action()
+
+    episode_steps += 1
+    episode_reward += reward
+
+    agent.feed(action, reward, new_state)
+    agent.train()
+
+    if RENDER:
+        scenery.draw()
+        text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
+        surface.blit(text, (5, 5))
+        text_y = 5
+        if pygame.time.get_ticks() % 1000 <= 500:
+            msg = ""
+            color = (255, 255, 255)
+            if scenery.is_recording():
+                msg = "RECORDING"
+                color = (255, 64, 64)
+            elif scenery.is_playing():
+                msg = "PLAYING"
+                color = (64, 255, 64)
+            (width, height) = font.size(msg)
+            text = font.render(msg, True, color)
+            surface.blit(text, (surface.get_width() - width - 5, text_y))
+            text_y += height
+
+        pygame.display.update()
+        clock.tick(50)
+
+    if terminated:
+        print(
+            "Episode {} finished in {} steps, average reward = {}".format(
+                episode_count, episode_steps, episode_reward / episode_steps
+            )
+        )
+
+        rewards[episode_count] += episode_reward / episode_steps
+
+        episode_count += 1
+        episode_steps = 0
+        episode_reward = 0
+
+        scenery.reset()
+        state = scenery.get_current_state()
+        agent.update_target_networks()
+
+        if episode_count >= episodes:
+            n += 1
+            if n >= repetitions:
+                break
+
+            print("Repetition", n)
+            agent = new_ddpg()
+            episode_count = 0
+
+    time.sleep(0.02)
+
+pygame.quit()
+
+for i in range(episodes):
+    print(rewards[i] / n)
+
+agent.save_weights("pendulum-model")

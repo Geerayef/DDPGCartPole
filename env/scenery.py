@@ -4,7 +4,6 @@ import copy
 import glob
 import subprocess
 import pygame
-import math
 from .canvas import Canvas
 from .cart import Cart
 

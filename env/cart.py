@@ -17,8 +17,9 @@ class Cart:
     theta_acceleration = 0.0
 
     terminated = False
-    # 20 degree threshold
-    # theta_threshold_radians = 60 * (math.pi / 180)
+    # Pole angle threshold for termination
+    # - from observer's perspective: 20 degrees
+    theta_threshold = 70
     damping = 0
     theta_damping = 0
     actions_per_second = 20
@@ -108,7 +109,8 @@ class Cart:
         self.terminated = bool(
                 self.position[0] > 5.
                 or self.position[0] < -5.
-                or (self.theta > 70 or self.theta < -70)
+                or self.theta > self.theta_threshold
+                or self.theta < -self.theta_threshold
         )
 
     def draw(self, canvas):

@@ -1,10 +1,10 @@
 import pygame
 import numpy as np
 import time
-from tkinter import Tk
+from tkinter import filedialog, Tk
 from .ddpg import DDPG
 from env.scenery import Scenery
-from util.flags import TRACE, RENDER
+from util.flags import TRACE, RENDER, RECORD, SAVE_NEW_WEIGHTS
 
 
 def new_ddpg():
@@ -16,6 +16,35 @@ def new_ddpg():
         critic_layers=[64, 32],
         memory_size=100000
     )
+
+
+def handle_recording():
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                if scenery.is_recording():
+                    scenery.stop_recording()
+                else:
+                    scenery.start_recording()
+            elif event.key == pygame.K_p:
+                if scenery.is_playing():
+                    scenery.stop_playing()
+                else:
+                    scenery.start_playing(filedialog.askopenfilename())
+            elif event.key == pygame.K_c:
+                filename = filedialog.askopenfilename()
+                if filename != "":
+                    surface.fill((0, 0, 0))
+                    msg = "Converting video ..."
+                    (width, height) = font.size(msg)
+                    text = font.render(msg, True, (255, 255, 255))
+                    surface.blit(
+                            text,
+                            ((surface.get_width() - width) / 2,
+                             (surface.get_height() - height) / 2)
+                    )
+                    pygame.display.update()
+                    scenery.convert_recording(filename)
 
 
 # ~  Simulator
@@ -90,6 +119,9 @@ while run:
     agent.feed(action, reward, state)
     agent.train()
 
+    if RECORD:
+        handle_recording()
+
     if TRACE:
         print(f"~~~~~ Action: to apply: {action}")
         print(f"~~~~~ Action: after application: {scenery._action}")
@@ -128,6 +160,8 @@ while run:
         episode_count += 1
         episode_steps = 0
         episode_reward = 0
+
+        # Used with my implementation of the Ornstein-Uhlenbeck noise
         agent.episode_counter += 1
 
         scenery.reset()
@@ -151,4 +185,5 @@ pygame.quit()
 for i in range(episodes):
     print(rewards[i] / n)
 
-agent.save_weights("cartpole-model")
+if SAVE_NEW_WEIGHTS:
+    agent.save_weights("cartpole-model")

@@ -108,7 +108,7 @@ class Cart:
         self.terminated = bool(
                 self.position[0] > 5.
                 or self.position[0] < -5.
-                or (self.theta > 70 and self.theta < 290)
+                or (self.theta > 70 or self.theta < -70)
         )
 
     def draw(self, canvas):

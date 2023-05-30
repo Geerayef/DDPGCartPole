@@ -29,7 +29,7 @@ class Scenery:
         self._canvas = Canvas(surface)
         self._canvas.set_vertical_offset_at(7.0 / 8.0)
         self._cart = Cart()
-        self._cart.position = (-1.0, 0.0)
+        self._cart.position = (0.0, 0.0)
 
     def reset(self):
         self._action = 0
@@ -124,8 +124,7 @@ class Scenery:
     def post_tick(self):
         reward = 1
         if self._cart.terminated:
-            reward = -0.5
-
+            reward = -1
         return self.get_current_state(), reward, self._cart.terminated
 
     def draw(self, canvas=None):

@@ -4,16 +4,14 @@ import time
 from tkinter import Tk
 from .ddpg import DDPG
 from env.scenery import Scenery
-from util.flags import TRACE
-
-RENDER = True
+from util.flags import TRACE, RENDER
 
 
 def new_ddpg():
     return DDPG(
         num_inputs=4,
         num_outputs=1,
-        noise=[0.01],
+        noise=[0.02],
         actor_layers=[64, 32],
         critic_layers=[64, 32],
         memory_size=100000
@@ -94,7 +92,7 @@ while run:
 
     if TRACE:
         print(f"~~~~~ Action: to apply: {action}")
-        print(f"~~~~~ Action: after applied: {scenery._action}")
+        print(f"~~~~~ Action: after application: {scenery._action}")
         print(f"~~~~~ State: after tick: {state}")
 
     if RENDER:
@@ -130,6 +128,7 @@ while run:
         episode_count += 1
         episode_steps = 0
         episode_reward = 0
+        agent.episode_counter += 1
 
         scenery.reset()
         state = scenery.get_current_state()

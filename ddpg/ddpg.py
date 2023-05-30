@@ -1,17 +1,18 @@
 import random
 import numpy as np
-
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, clone_model
 from tensorflow.keras.layers import Dense, Activation
 from tensorflow.keras.optimizers import Adam
+from tf_agents.utils import common
+from util.ornstein_uhlenbeck import OUNoise
 
 
 class DDPG:
     def __init__(
             self, num_inputs, num_outputs, noise,
             actor_layers, critic_layers, memory_size,
-            actor_lr=0.001, critic_lr=0.001
+            actor_lr=0.0001, critic_lr=0.0002
     ):
         assert num_inputs > 0
         assert num_outputs > 0
@@ -19,7 +20,19 @@ class DDPG:
         assert len(actor_layers) > 0
         assert len(critic_layers) > 0
 
+        # Noise: normal (parameter)
+        # Ornstein-Uhlenbeck (per DDPG paper) in 2 flavors: tf_agents
+        # & my implementation
         self._noise = noise
+        self.OU = common.ornstein_uhlenbeck_process(
+            1.0,
+            damping=0.15,
+            stddev=0.2,
+            seed=None,
+            scope='ornstein_uhlenbeck_noise'
+        )
+        self.episode_counter = 0
+        self.myOUNoise = OUNoise(action_space_size=1)
 
         # Construct the actor.
         self.actor = Sequential()
@@ -77,7 +90,11 @@ class DDPG:
 
         # Add noise.
         for i in range(len(action)):
-            action[i] += np.random.normal(0, self._noise[i])
+            # action[i] += np.random.normal(0, self._noise[i])
+            # Add Ornstein-Uhlenbeck noise
+            # action[i] += self.OU.__call__()
+            # My implementation of Ornstein-Uhlenbeck noise
+            action[i] = self.myOUNoise.get_action(action[i])
             action[i] = np.clip(action[i], -1, 1)
 
         return action

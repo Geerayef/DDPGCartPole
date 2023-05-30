@@ -17,6 +17,8 @@ class Cart:
     theta_acceleration = 0.0
 
     terminated = False
+    # 20 degree threshold
+    # theta_threshold_radians = 60 * (math.pi / 180)
     damping = 0
     theta_damping = 0
     actions_per_second = 20
@@ -84,6 +86,7 @@ class Cart:
         self.speed += self.acceleration * dt
         x += self.speed * dt
         self.position = (x, y)
+
         if TRACE:
             print(f"~~~~~ DT {dt}")
             print(f"~~~~~ New Cart Position: {self.position}")
@@ -103,8 +106,9 @@ class Cart:
         if TRACE:
             print(f"~~~~~ Theta angle: {self.theta}")
         self.terminated = bool(
-                self.position[0] > 3.
-                or self.position[0] < -3.
+                self.position[0] > 5.
+                or self.position[0] < -5.
+                or (self.theta > 70 and self.theta < 290)
         )
 
     def draw(self, canvas):
@@ -115,7 +119,10 @@ class Cart:
         y0 = y + wheel + self.width / 6
         x1 = x0 + pole
         y1 = y0 + self.pole_length
-        canvas.draw_rectangle((x0, y0), (x1, y1), (64, 32, 32), (x, y0), self.theta)
+        canvas.draw_rectangle(
+                (x0, y0), (x1, y1),
+                (64, 32, 32), (x, y0), self.theta
+                )
         canvas.draw_circle((x, y0 - 0.5 * pole), 1.2 * pole, (128, 0, 0))
         canvas.draw_circle((x, y1), 1.5 * pole, (0, 0, 0), (x, y0), self.theta)
 

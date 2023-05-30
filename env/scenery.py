@@ -4,6 +4,7 @@ import copy
 import glob
 import subprocess
 import pygame
+import math
 from .canvas import Canvas
 from .cart import Cart
 
@@ -38,6 +39,21 @@ class Scenery:
 
     def get_current_state(self):
         return self._cart.get_current_state()
+
+    def get_reward(self, state, terminated):
+        position, velocity, angle, angular_velocity = state
+        upright = (1 - abs(angle))
+        centred = (1 - abs(position))
+        reward = upright * 0.5 + centred * 0.5 + 0.2
+
+        if terminated:
+            fallen = abs(angle) / 360
+            off_centre = abs(position) / 5
+            penalty = fallen * 0.5 + off_centre * 0.5 + 0.1
+
+            reward -= penalty
+
+        return reward
 
     def switch_automatic(self):
         self._automatic = not self._automatic
@@ -122,9 +138,7 @@ class Scenery:
             self.load_frame()
 
     def post_tick(self):
-        reward = 1
-        if self._cart.terminated:
-            reward = -1
+        reward = self.get_reward(self.get_current_state(), self._cart.terminated)
         return self.get_current_state(), reward, self._cart.terminated
 
     def draw(self, canvas=None):

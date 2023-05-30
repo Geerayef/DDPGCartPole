@@ -25,7 +25,7 @@ class DDPG:
         # & my implementation
         self._noise = noise
         self.OU = common.ornstein_uhlenbeck_process(
-            1.0,
+            0.0,
             damping=0.15,
             stddev=0.2,
             seed=None,
@@ -92,9 +92,9 @@ class DDPG:
         for i in range(len(action)):
             # action[i] += np.random.normal(0, self._noise[i])
             # Add Ornstein-Uhlenbeck noise
-            # action[i] += self.OU.__call__()
+            action[i] += self.OU.__call__()
             # My implementation of Ornstein-Uhlenbeck noise
-            action[i] = self.myOUNoise.get_action(action[i])
+            # action[i] = self.myOUNoise.get_action(action[i])
             action[i] = np.clip(action[i], -1, 1)
 
         return action
@@ -111,7 +111,7 @@ class DDPG:
 
         self._previous_state = new_state
 
-    def train(self, batch_size=32, gamma=0.99):
+    def train(self, batch_size=32, gamma=0.95):
         # Are there enough samples for a batch?
         if len(self._memory) < batch_size:
             return

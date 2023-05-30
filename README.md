@@ -5,7 +5,7 @@ Important to note, there are some "flags" to be found in the "util" module, with
 
 ## Required packages
 This is not a comprehensive list of all the packages used in this project, however, the packages listed are the minimum required to run the project.
-### TensorFlow
+### TensorFlow GPU
     Use conda (miniconda3) to install TensorFlow and all its dependencies - as per the official instructions found on TensorFlow website.
 ### tf-agents
     Use pip to install tf-agents WITHIN the conda environment where TensorFlow is set up.

@@ -85,7 +85,7 @@ if agent.load_weights("cartpole-model"):
 episode_count = 0
 episode_steps = 0
 episode_reward = 0
-episodes = 100
+episodes = 5
 repetitions = 1
 n = 0
 
@@ -152,11 +152,12 @@ while run:
         pygame.display.update()
 
     if terminated:
-        print(
-            "Episode {} finished in {} steps, average reward = {}".format(
-                episode_count, episode_steps, episode_reward / episode_steps
-            )
-        )
+        # During data collection about training - keep this message off
+        # print(
+        #     "Episode {} finished in {} steps, average reward = {}".format(
+        #         episode_count, episode_steps, episode_reward / episode_steps
+        #     )
+        # )
 
         rewards[episode_count] += episode_reward / episode_steps
 
@@ -185,7 +186,8 @@ while run:
 
 pygame.quit()
 
-print("~~~~~ Results per episode:")
+print("~~~~~ Results per episode")
+print("~~~~~ Start of results:")
 for i in range(episodes):
     print(rewards[i] / n)
 print("~~~~~ End of results.")

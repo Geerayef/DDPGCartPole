@@ -18,6 +18,17 @@ def new_ddpg():
     )
 
 
+# ~  Simulator
+resolution = (1000, 300)
+pygame.init()
+if RENDER:
+    pygame.display.set_caption("Cart-pole simulator")
+
+surface = pygame.display.set_mode(resolution)
+scenery = Scenery(surface)
+clock = pygame.time.Clock()
+
+
 def handle_recording():
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -46,14 +57,6 @@ def handle_recording():
                     pygame.display.update()
                     scenery.convert_recording(filename)
 
-
-# ~  Simulator
-resolution = (1000, 300)
-pygame.init()
-pygame.display.set_caption("Cart-pole simulator")
-surface = pygame.display.set_mode(resolution)
-scenery = Scenery(surface)
-clock = pygame.time.Clock()
 
 if RENDER:
     Tk().withdraw()
@@ -182,8 +185,10 @@ while run:
 
 pygame.quit()
 
+print("~~~~~ Results per episode:")
 for i in range(episodes):
     print(rewards[i] / n)
+print("~~~~~ End of results.")
 
 if SAVE_NEW_WEIGHTS:
     agent.save_weights("cartpole-model")

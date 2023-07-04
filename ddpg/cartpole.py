@@ -85,7 +85,7 @@ if agent.load_weights("cartpole-model"):
 episode_count = 0
 episode_steps = 0
 episode_reward = 0
-episodes = 5
+episodes = 100
 repetitions = 1
 n = 0
 

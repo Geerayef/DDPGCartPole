@@ -11,7 +11,7 @@ def task():
             )
 
     print("~~~~~ Running script collect_plotting_data")
-    os.system(collect_plotting_data)
+    os.system(collect_plotting_data[0])
 
     print("~~~~~ Task is done.\n")
     time.sleep(10)

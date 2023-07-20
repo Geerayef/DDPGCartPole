@@ -46,5 +46,5 @@ then
     done
 fi
 
-echo ~~~~~ Done. \($session\)
-echo ~~~~~ Data collection complete.
+echo "~~~~~ Done. \($session\)"
+echo "~~~~~ Data collection complete."

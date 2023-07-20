@@ -4,7 +4,7 @@ import time
 from tkinter import filedialog, Tk
 from .ddpg import DDPG
 from env.scenery import Scenery
-from util.flags import TRACE, RENDER, RECORD, SAVE_NEW_WEIGHTS
+from util.flags import TRACE, RECORD, SAVE_NEW_WEIGHTS
 
 
 def new_ddpg():
@@ -21,8 +21,7 @@ def new_ddpg():
 # ~  Simulator
 resolution = (1000, 300)
 pygame.init()
-if RENDER:
-    pygame.display.set_caption("Cart-pole simulator")
+pygame.display.set_caption("Cart-pole simulator")
 
 surface = pygame.display.set_mode(resolution)
 scenery = Scenery(surface)
@@ -58,21 +57,20 @@ def handle_recording():
                     scenery.convert_recording(filename)
 
 
-if RENDER:
-    Tk().withdraw()
+Tk().withdraw()
 
-    if pygame.font.match_font("Monospace", True):
-        font = pygame.font.SysFont("Monospace", 20, True)
-    elif pygame.font.match_font("Courier New", True):
-        font = pygame.font.SysFont("Courier New", 20, True)
-    else:
-        font = pygame.font.Font(None, 20)
+if pygame.font.match_font("Monospace", True):
+    font = pygame.font.SysFont("Monospace", 20, True)
+elif pygame.font.match_font("Courier New", True):
+    font = pygame.font.SysFont("Courier New", 20, True)
+else:
+    font = pygame.font.Font(None, 20)
 
-    sum_dt = 0
-    fps = 0
-    sum_fps = 0
-    frame_count = 0
-    avg_fps = 0
+sum_dt = 0
+fps = 0
+sum_fps = 0
+frame_count = 0
+avg_fps = 0
 
 # ~  Algorithm
 run = True
@@ -85,7 +83,7 @@ if agent.load_weights("cartpole-model"):
 episode_count = 0
 episode_steps = 0
 episode_reward = 0
-episodes = 100
+episodes = 1000
 repetitions = 1
 n = 0
 
@@ -98,17 +96,16 @@ rewards = np.zeros(episodes)
 # Body
 while run:
     dt = clock.get_time()
-    if RENDER:
-        frame_count += 1
-        sum_dt += dt
-        if dt > 0:
-            fps = 1000.0 / dt
-        sum_fps += fps
-        if sum_dt >= 100:
-            avg_fps = sum_fps / frame_count
-            sum_fps = 0
-            frame_count = 0
-            sum_dt = 0
+    frame_count += 1
+    sum_dt += dt
+    if dt > 0:
+        fps = 1000.0 / dt
+    sum_fps += fps
+    if sum_dt >= 100:
+        avg_fps = sum_fps / frame_count
+        sum_fps = 0
+        frame_count = 0
+        sum_dt = 0
 
     action = agent.action(state)
 
@@ -126,30 +123,30 @@ while run:
         handle_recording()
 
     if TRACE:
-        print(f"~~~~~ Action: to apply: {action}")
-        print(f"~~~~~ Action: after application: {scenery._action}")
-        print(f"~~~~~ State: after tick: {state}")
+        print(f"~~~~~ Action to apply: {action}")
+        print(f"~~~~~ Episode reward: {episode_reward}")
+    #     print(f"~~~~~ Action: after application: {scenery._action}")
+    #     print(f"~~~~~ State: after tick: {state}")
 
-    if RENDER:
-        scenery.draw()
-        text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
-        surface.blit(text, (5, 5))
-        text_y = 5
-        if pygame.time.get_ticks() % 1000 <= 500:
-            msg = ""
-            color = (255, 255, 255)
-            if scenery.is_recording():
-                msg = "RECORDING"
-                color = (255, 64, 64)
-            elif scenery.is_playing():
-                msg = "PLAYING"
-                color = (64, 255, 64)
-            (width, height) = font.size(msg)
-            text = font.render(msg, True, color)
-            surface.blit(text, (surface.get_width() - width - 5, text_y))
-            text_y += height
+    scenery.draw()
+    text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
+    surface.blit(text, (5, 5))
+    text_y = 5
+    if pygame.time.get_ticks() % 1000 <= 500:
+        msg = ""
+        color = (255, 255, 255)
+        if scenery.is_recording():
+            msg = "RECORDING"
+            color = (255, 64, 64)
+        elif scenery.is_playing():
+            msg = "PLAYING"
+            color = (64, 255, 64)
+        (width, height) = font.size(msg)
+        text = font.render(msg, True, color)
+        surface.blit(text, (surface.get_width() - width - 5, text_y))
+        text_y += height
 
-        pygame.display.update()
+    pygame.display.update()
 
     if terminated:
         # During data collection about training - keep this message off

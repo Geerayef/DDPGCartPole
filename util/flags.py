@@ -1,4 +1,3 @@
 TRACE = False
-RENDER = True
 RECORD = False
 SAVE_NEW_WEIGHTS = False

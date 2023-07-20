@@ -89,8 +89,8 @@ class Cart:
         self.position = (x, y)
 
         if TRACE:
-            print(f"~~~~~ DT {dt}")
-            print(f"~~~~~ New Cart Position: {self.position}")
+            # print(f"~~~~~ DT {dt}")
+            print(f"~~~~~ New Cart Position: {self.position[0]}")
 
         a = self.acceleration / self.pole_length * cos
         b = g / self.pole_length * sin
@@ -104,14 +104,14 @@ class Cart:
         if self.theta >= 180:
             self.theta -= 360
 
-        if TRACE:
-            print(f"~~~~~ Theta angle: {self.theta}")
         self.terminated = bool(
                 self.position[0] > 5.
                 or self.position[0] < -5.
                 or self.theta > self.theta_threshold
                 or self.theta < -self.theta_threshold
         )
+        if TRACE:
+            print(f"~~~~~ TERMINATED - position: {self.position[0]}; Angle: {self.theta} and theta_threshold: {self.theta_threshold}")
 
     def draw(self, canvas):
         (x, y) = self.position

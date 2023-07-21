@@ -14,11 +14,12 @@ def new_ddpg():
         noise=[0.02],
         actor_layers=[64, 32],
         critic_layers=[64, 32],
-        memory_size=100000
+        memory_size=10000
     )
 
 
 # ~  Simulator
+
 resolution = (1000, 300)
 pygame.init()
 pygame.display.set_caption("Cart-pole simulator")
@@ -72,7 +73,9 @@ sum_fps = 0
 frame_count = 0
 avg_fps = 0
 
+
 # ~  Algorithm
+
 run = True
 
 agent = new_ddpg()
@@ -95,6 +98,8 @@ rewards = np.zeros(episodes)
 
 # Body
 while run:
+    pygame.event.pump()
+
     dt = clock.get_time()
     frame_count += 1
     sum_dt += dt
@@ -124,9 +129,9 @@ while run:
 
     if TRACE:
         print(f"~~~~~ Action to apply: {action}")
-        print(f"~~~~~ Episode reward: {episode_reward}")
-    #     print(f"~~~~~ Action: after application: {scenery._action}")
-    #     print(f"~~~~~ State: after tick: {state}")
+        print(f"~~~~~ Episode reward : {episode_reward}")
+        print(f"~~~~~ Action: after application: {scenery._action}")
+        print(f"~~~~~ State: after tick: {state}")
 
     scenery.draw()
     text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
@@ -150,11 +155,8 @@ while run:
 
     if terminated:
         # During data collection about training - keep this message off
-        # print(
-        #     "Episode {} finished in {} steps, average reward = {}".format(
-        #         episode_count, episode_steps, episode_reward / episode_steps
-        #     )
-        # )
+        # print(f"~~~~~ Episode {episode_count} finished in {episode_steps} steps")
+        # print(f"Average reward = {episode_reward / episode_steps}")
 
         rewards[episode_count] += episode_reward / episode_steps
 
@@ -162,7 +164,6 @@ while run:
         episode_steps = 0
         episode_reward = 0
 
-        # Used with my implementation of the Ornstein-Uhlenbeck noise
         agent.episode_counter += 1
 
         scenery.reset()

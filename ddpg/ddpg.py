@@ -25,7 +25,7 @@ class DDPG:
         # & my implementation
         self._noise = noise
         self.OU = common.ornstein_uhlenbeck_process(
-            0.0,
+            initial_value=0.0,
             damping=0.15,
             stddev=0.2,
             seed=None,
@@ -85,15 +85,11 @@ class DDPG:
 
     def action(self, state):
         # Let the actor return an action for the given state.
-        action = self.actor(tf.convert_to_tensor(
-            [state], dtype=tf.float32)).numpy()[0]
+        action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0] 
 
-        # Add noise.
+        # Add Ornstein-Uhlenbeck noise (tf-agents & myOUNoise)
         for i in range(len(action)):
-            # action[i] += np.random.normal(0, self._noise[i])
-            # Add Ornstein-Uhlenbeck noise
             action[i] += self.OU.__call__()
-            # My implementation of Ornstein-Uhlenbeck noise
             # action[i] = self.myOUNoise.get_action(action[i])
             action[i] = np.clip(action[i], -1, 1)
 

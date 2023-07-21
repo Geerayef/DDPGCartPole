@@ -41,21 +41,18 @@ class Scenery:
         return self._cart.get_current_state()
 
     def get_reward(self, state, terminated):
-        position_threshold = 5.
+        position_threshold = 4
         angle_threshold = 70
 
         position, velocity, angle, angular_velocity = state
-        upright = abs(angle) / angle_threshold
-        centred = abs(position) / position_threshold
-        reward = upright * 0.5 + centred * 0.5 + 0.01 * velocity + 0.01 * angular_velocity + 0.2
-        if TRACE:
-            print(f"~~~~~ Upright: {upright}. Centred: {centred}. Reward: {reward}")
+        upright = 1 - abs(angle / angle_threshold)
+        centred = 1 - abs(position / position_threshold)
+        reward = ( 0.5 * upright ) + ( 0.5 * centred ) + 0.2
 
         if terminated:
-            # fallen = abs(angle) / angle_threshold
-            # off_centre = abs(position) / position_threshold
-            penalty = upright * 0.5 + centred * 0.5 + 0.01 * velocity + 0.01 * angular_velocity + 0.1
-
+            fallen = abs(angle / angle_threshold)
+            off_centre = abs(position / position_threshold)
+            penalty = ( 0.5 * fallen ) + ( 0.5 * off_centre ) + 0.1
             reward -= penalty
 
         return reward
@@ -122,10 +119,10 @@ class Scenery:
 
     def _apply_action(self, direction):
         self._action += direction
-        if self._action > 1:
-            self._action = 1
-        if self._action < -1:
-            self._action = -1
+        # if self._action > 1:
+        #     self._action = 1
+        # if self._action < -1:
+        #     self._action = -1
 
     def tick(self, time):
         if self._frozen:

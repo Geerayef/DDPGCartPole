@@ -9,7 +9,7 @@ This is not a comprehensive list of all the packages used in this project, howev
     Use conda (miniconda3) to install TensorFlow and all its dependencies - as per the official instructions found on TensorFlow website.
 ### tf-agents
     Use pip to install tf-agents WITHIN the conda environment where TensorFlow is set up.
-### gymnasium
+### gymnasium (optional: used for starting the example)
     Use pip to install gymnasium - can be a global install (not specific to the conda environment).
 ### tkinter
     Use pip to install tkinter - can be a global install (not specific to the conda environment).

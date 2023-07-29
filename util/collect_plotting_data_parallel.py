@@ -18,7 +18,7 @@ def task():
 
 
 tasks = []
-max_processes = 5
+max_processes = 2
 all_processes = []
 
 # Run this task with max times

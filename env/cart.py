@@ -9,17 +9,16 @@ class Cart:
     pole_length = 1.0
     # Cart
     position = (0.0, 0.0)
+    position_range = 4.0
     speed = 0.0
     acceleration = 0.0
     # Pole
     theta = 0.0
     theta_speed = 0.0
     theta_acceleration = 0.0
+    theta_threshold = 70.
 
     terminated = False
-    # Pole angle threshold for termination
-    # - from observer's perspective: 20 degrees
-    theta_threshold = 70
     damping = 0
     theta_damping = 0
     actions_per_second = 20
@@ -105,8 +104,8 @@ class Cart:
             self.theta -= 360
 
         self.terminated = bool(
-                self.position[0] > 4.
-                or self.position[0] < -4.
+                self.position[0] > self.position_range
+                or self.position[0] < -self.position_range
                 or self.theta > self.theta_threshold
                 or self.theta < -self.theta_threshold
         )

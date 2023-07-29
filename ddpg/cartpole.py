@@ -14,7 +14,7 @@ def new_ddpg():
         noise=[0.02],
         actor_layers=[64, 32],
         critic_layers=[64, 32],
-        memory_size=10000
+        memory_size=250000
     )
 
 
@@ -83,18 +83,19 @@ agent = new_ddpg()
 if agent.load_weights("cartpole-model"):
     print("~~~~~ Weights loaded.")
 
+episodes = 5000
 episode_count = 0
 episode_steps = 0
-episode_reward = 0
-episodes = 1000
+episode_reward_accumulator = 0
 repetitions = 1
 n = 0
+
+rewards = np.zeros(episodes)
 
 scenery.reset()
 state = scenery.get_current_state()
 if TRACE:
     print(f"~~~~~ Initial state: {state}")
-rewards = np.zeros(episodes)
 
 # Body
 while run:
@@ -116,24 +117,46 @@ while run:
 
     scenery._apply_action(action[0])
     scenery.tick(dt / 1000.0)
-    state, reward, terminated = scenery.post_tick()
-
-    episode_steps += 1
-    episode_reward += reward
+    state, reward, terminated = scenery.post_tick(episode_steps)
+    
+    print(f"~~~~~ Reward: {reward}")
 
     agent.feed(action, reward, state)
+    episode_reward_accumulator += reward
+    print(f"~~~~~ Accumulated: {episode_reward_accumulator}")
+
     agent.train()
 
-    if RECORD:
-        handle_recording()
-
-    if TRACE:
-        print(f"~~~~~ Action to apply: {action}")
-        print(f"~~~~~ Episode reward : {episode_reward}")
-        print(f"~~~~~ Action: after application: {scenery._action}")
-        print(f"~~~~~ State: after tick: {state}")
-
     scenery.draw()
+
+    episode_steps += 1
+        
+    if terminated:
+        # During data collection about training - keep this message off
+        # print(f"~~~~~ Episode {episode_count} finished in {episode_steps} steps")
+        # print(f"Average reward = {episode_reward / episode_steps}")
+
+        rewards[episode_count] += episode_reward_accumulator / episode_steps
+
+        episode_count += 1
+        episode_steps = 0
+        episode_reward_accumulator = 0
+
+        agent.episode_counter += 1
+
+        scenery.reset()
+        state = scenery.get_current_state()
+        agent.update_target_networks()
+
+        if episode_count >= episodes:
+            n += 1
+            if n >= repetitions:
+                break
+
+            print("~~~~~ Repetition", n)
+            agent = new_ddpg()
+            episode_count = 0
+
     text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
     surface.blit(text, (5, 5))
     text_y = 5
@@ -153,31 +176,14 @@ while run:
 
     pygame.display.update()
 
-    if terminated:
-        # During data collection about training - keep this message off
-        # print(f"~~~~~ Episode {episode_count} finished in {episode_steps} steps")
-        # print(f"Average reward = {episode_reward / episode_steps}")
+    if RECORD:
+        handle_recording()
 
-        rewards[episode_count] += episode_reward / episode_steps
-
-        episode_count += 1
-        episode_steps = 0
-        episode_reward = 0
-
-        agent.episode_counter += 1
-
-        scenery.reset()
-        state = scenery.get_current_state()
-        agent.update_target_networks()
-
-        if episode_count >= episodes:
-            n += 1
-            if n >= repetitions:
-                break
-
-            print("~~~~~ Repetition", n)
-            agent = new_ddpg()
-            episode_count = 0
+    if TRACE:
+        print(f"~~~~~ Action to apply         : {action}")
+        print(f"~~~~~ Episode reward          : {episode_reward_accumulator}")
+        print(f"~~~~~ Action after application: {scenery._action}")
+        print(f"~~~~~ State after tick        : {state}")
 
     clock.tick(50)
     time.sleep(0.02)
@@ -187,7 +193,7 @@ pygame.quit()
 print("~~~~~ Results per episode")
 print("~~~~~ Start of results:")
 for i in range(episodes):
-    print(rewards[i] / n)
+    print(rewards[i])
 print("~~~~~ End of results.")
 
 if SAVE_NEW_WEIGHTS:

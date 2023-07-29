@@ -12,7 +12,7 @@ class DDPG:
     def __init__(
             self, num_inputs, num_outputs, noise,
             actor_layers, critic_layers, memory_size,
-            actor_lr=0.0001, critic_lr=0.0002
+            actor_lr=0.0001, critic_lr=0.001
     ):
         assert num_inputs > 0
         assert num_outputs > 0
@@ -24,11 +24,12 @@ class DDPG:
         # Ornstein-Uhlenbeck (per DDPG paper) in 2 flavors: tf_agents
         # & my implementation
         self._noise = noise
+        np.random.seed(5)
         self.OU = common.ornstein_uhlenbeck_process(
             initial_value=0.0,
-            damping=0.15,
+            damping=0.12,
             stddev=0.2,
-            seed=None,
+            seed=np.random.normal(),
             scope='ornstein_uhlenbeck_noise'
         )
         self.episode_counter = 0
@@ -89,6 +90,7 @@ class DDPG:
 
         # Add Ornstein-Uhlenbeck noise (tf-agents & myOUNoise)
         for i in range(len(action)):
+            action[i] = np.clip(action[i], -1, 1)
             action[i] += self.OU.__call__()
             # action[i] = self.myOUNoise.get_action(action[i])
             action[i] = np.clip(action[i], -1, 1)
@@ -107,7 +109,7 @@ class DDPG:
 
         self._previous_state = new_state
 
-    def train(self, batch_size=32, gamma=0.95):
+    def train(self, batch_size=64, gamma=0.99):
         # Are there enough samples for a batch?
         if len(self._memory) < batch_size:
             return

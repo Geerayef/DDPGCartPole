@@ -31,6 +31,7 @@ class Scenery:
         self._canvas.set_vertical_offset_at(7.0 / 8.0)
         self._cart = Cart()
         self._cart.position = (0.0, 0.0)
+        self._max_steps = 50000
 
     def reset(self):
         self._action = 0
@@ -40,20 +41,19 @@ class Scenery:
     def get_current_state(self):
         return self._cart.get_current_state()
 
-    def get_reward(self, state, terminated):
-        position_threshold = 4
-        angle_threshold = 70
-
+    def get_reward(self, state, terminated, steps):
         position, velocity, angle, angular_velocity = state
-        upright = 1 - abs(angle / angle_threshold)
-        centred = 1 - abs(position / position_threshold)
-        reward = ( 0.5 * upright ) + ( 0.5 * centred ) + 0.2
+
+        time = steps / self._max_steps
+        upright = 1 - abs(angle) / self._cart.theta_threshold
+        centred = 1 - abs(position) / self._cart.position_range
+        reward = ( 0.8 * upright ) + ( 0.4 * centred ) + time 
 
         if terminated:
-            fallen = abs(angle / angle_threshold)
-            off_centre = abs(position / position_threshold)
-            penalty = ( 0.5 * fallen ) + ( 0.5 * off_centre ) + 0.1
-            reward -= penalty
+            fallen = abs(angle) / self._cart.theta_threshold
+            off_centre = abs(position) / self._cart.position_range
+            # reward -= ( ( 0.5 * fallen ) + ( 0.5 * off_centre ) + ( 0.5 * time ) )
+            reward -= ( 125 + fallen + ( 0.5 * off_centre ) + ( 1 - time ) )
 
         return reward
 
@@ -119,10 +119,10 @@ class Scenery:
 
     def _apply_action(self, direction):
         self._action += direction
-        # if self._action > 1:
-        #     self._action = 1
-        # if self._action < -1:
-        #     self._action = -1
+        if self._action > 1:
+            self._action = 1
+        if self._action < -1:
+            self._action = -1
 
     def tick(self, time):
         if self._frozen:
@@ -139,8 +139,8 @@ class Scenery:
         elif self._playing:
             self.load_frame()
 
-    def post_tick(self):
-        reward = self.get_reward(self.get_current_state(), self._cart.terminated)
+    def post_tick(self, steps):
+        reward = self.get_reward(self.get_current_state(), self._cart.terminated, steps)
         return self.get_current_state(), reward, self._cart.terminated
 
     def draw(self, canvas=None):

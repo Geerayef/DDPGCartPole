@@ -6,11 +6,9 @@ import glob
 
 def task():
     pwd = os.getcwd()
-    collect_plotting_data = glob.glob(
-            pwd + "/collect_plotting_data.sh"
-            )
+    collect_plotting_data = glob.glob(pwd + "/collect_plotting_data.sh")
 
-    print("~~~~~ Running script collect_plotting_data")
+    print("~~~~~ Run collect_plotting_data")
     os.system(collect_plotting_data[0])
 
     print("~~~~~ Task is done.\n")

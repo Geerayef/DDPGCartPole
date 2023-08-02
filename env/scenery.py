@@ -4,6 +4,8 @@ import copy
 import glob
 import subprocess
 import pygame
+import numpy as np
+import math
 from .canvas import Canvas
 from .cart import Cart
 from util.flags import TRACE
@@ -25,13 +27,14 @@ class Scenery:
     _data = ""
     _p_data = 0
     _start_time = 0
+    _max_ang_velo = 0.1
+    _max_steps = 8192
 
     def __init__(self, surface):
         self._canvas = Canvas(surface)
         self._canvas.set_vertical_offset_at(7.0 / 8.0)
         self._cart = Cart()
         self._cart.position = (0.0, 0.0)
-        self._max_steps = 50000
 
     def reset(self):
         self._action = 0
@@ -41,19 +44,30 @@ class Scenery:
     def get_current_state(self):
         return self._cart.get_current_state()
 
+    def sigmoid(self, x):
+        return ( 1.0 / (1.0 + math.exp(-x)) )
+
     def get_reward(self, state, terminated, steps):
         position, velocity, angle, angular_velocity = state
+        a = abs(angular_velocity)
+        self._max_ang_velo = a if a > self._max_ang_velo else self._max_ang_velo
 
-        time = steps / self._max_steps
-        upright = 1 - abs(angle) / self._cart.theta_threshold
+        # time = steps / self._max_steps
+        # upright = 1 - abs(angle) / self._cart.theta_threshold
+
+        ang_velo_norm = abs(angular_velocity) / self._max_ang_velo
+        swing_speed = self.sigmoid(ang_velo_norm)
+
+        upright = np.cos(np.radians(abs(angle)))
         centred = 1 - abs(position) / self._cart.position_range
-        reward = ( 0.8 * upright ) + ( 0.4 * centred ) + time 
+
+        reward = ( 5 * upright ) + ( 3 * ( 1 - swing_speed ) ) + ( 0.5 * centred )
 
         if terminated:
-            fallen = abs(angle) / self._cart.theta_threshold
-            off_centre = abs(position) / self._cart.position_range
-            # reward -= ( ( 0.5 * fallen ) + ( 0.5 * off_centre ) + ( 0.5 * time ) )
-            reward -= ( 125 + fallen + ( 0.5 * off_centre ) + ( 1 - time ) )
+            # fallen = abs(angle) / self._cart.theta_threshold
+            # off_centre = abs(position) / self._cart.position_range
+            # reward -= fallen + ( 0.5 * off_centre ) + ( 1 - time )
+            reward -= ( 1 + ( 1 - upright ) + ( 1 - centred ) )
 
         return reward
 

@@ -98,10 +98,12 @@ class Cart:
         )
         self.theta_speed += self.theta_acceleration * dt
         self.theta += self.theta_speed * dt
-        if self.theta < 180:
-            self.theta += 360
-        if self.theta >= 180:
-            self.theta -= 360
+        # if self.theta < 180:
+        #     self.theta += 360
+        #     print(f"~~~~~ ADD 360")
+        # if self.theta >= 180:
+        #     print(f"~~~~~ SUBTRACT 360")
+        #     self.theta -= 360
 
         self.terminated = bool(
                 self.position[0] > self.position_range

@@ -3,8 +3,8 @@ import numpy as np
 
 class OUNoise:
     def __init__(
-            self, action_space_size, mu=0.0, theta=0.15,
-            max_sigma=0.5, min_sigma=0.05, decay_period=100000
+            self, action_space_size, decay_period, mu=0.0, theta=0.12,
+            max_sigma=0.5, min_sigma=0.05
     ):
         self.mu = mu
         self.theta = theta
@@ -18,17 +18,16 @@ class OUNoise:
         self.reset()
 
     def reset(self):
-        self.state = np.ones(self.action_dim) * self.mu
+        self.state = np.random.normal(self.mu, self.sigma, size=self.action_dim)
 
     def evolve_state(self):
         x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * \
-            np.random.randn(self.action_dim)
+        dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(self.action_dim)
         self.state = x + dx
+        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, self.time / self.decay_period)
         return self.state
 
-    def get_action(self, action, t=0):
+    def get_action(self, action, time):
+        self.time = time
         ou_state = self.evolve_state()
-        self.sigma = self.max_sigma - \
-            (self.max_sigma - self.min_sigma) * min(1.0, t / self.decay_period)
         return np.clip(action + ou_state, self.low, self.high)

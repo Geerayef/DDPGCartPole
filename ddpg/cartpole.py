@@ -7,14 +7,16 @@ from env.scenery import Scenery
 from util.flags import TRACE, RECORD, SAVE_NEW_WEIGHTS
 
 
-def new_ddpg():
+def new_ddpg(episodes):
     return DDPG(
         num_inputs=4,
         num_outputs=1,
-        noise=[0.02],
+        noise=[1],
         actor_layers=[64, 32],
         critic_layers=[64, 32],
-        memory_size=250000
+        memory_size=8192,
+        noise_decay=1000,
+        my_ou=True,
     )
 
 
@@ -78,26 +80,31 @@ avg_fps = 0
 
 run = True
 
-agent = new_ddpg()
-
-if agent.load_weights("cartpole-model"):
-    print("~~~~~ Weights loaded.")
-
-episodes = 5000
-episode_count = 0
+episodes = 2500
+episodes_count = 0
 episode_steps = 0
-episode_reward_accumulator = 0
 repetitions = 1
 n = 0
 
-rewards = np.zeros(episodes)
+# Metrics
+ep_reward = 0
+rewards_episodes = np.zeros(episodes)
+rewards_avg_step = np.zeros(episodes)
+pos_avg_episodes   = np.zeros(episodes)
+ep_pos = 0
+angle_avg_episodes = np.zeros(episodes)
+ep_angle = 0
+
+agent = new_ddpg(episodes)
+if agent.load_weights("cartpole-model"):
+    print("~~~~~ Weights loaded")
 
 scenery.reset()
 state = scenery.get_current_state()
 if TRACE:
     print(f"~~~~~ Initial state: {state}")
 
-# Body
+
 while run:
     pygame.event.pump()
 
@@ -113,51 +120,53 @@ while run:
         frame_count = 0
         sum_dt = 0
 
-    action = agent.action(state)
+
+    # ~  Main algorithm
+    action = agent.action(state, agent.episode_counter)
 
     scenery._apply_action(action[0])
     scenery.tick(dt / 1000.0)
-    state, reward, terminated = scenery.post_tick(episode_steps)
-    
-    print(f"~~~~~ Reward: {reward}")
+    state, step_reward, terminated = scenery.post_tick(episode_steps)
 
-    agent.feed(action, reward, state)
-    episode_reward_accumulator += reward
-    print(f"~~~~~ Accumulated: {episode_reward_accumulator}")
-
+    agent.feed(action, step_reward, state)
     agent.train()
 
-    scenery.draw()
-
+    ep_reward += step_reward
+    ep_pos += state[0]
+    ep_angle += state[2]
     episode_steps += 1
         
+    scenery.draw()
+
     if terminated:
-        # During data collection about training - keep this message off
-        # print(f"~~~~~ Episode {episode_count} finished in {episode_steps} steps")
-        # print(f"Average reward = {episode_reward / episode_steps}")
+        rewards_episodes[episodes_count] += ep_reward
+        rewards_avg_step[episodes_count] += ep_reward / episode_steps
+        pos_avg_episodes[episodes_count] += ep_pos / episode_steps
+        angle_avg_episodes[episodes_count] += ep_angle / episode_steps
 
-        rewards[episode_count] += episode_reward_accumulator / episode_steps
-
-        episode_count += 1
-        episode_steps = 0
-        episode_reward_accumulator = 0
-
+        episodes_count += 1
         agent.episode_counter += 1
+        episode_steps = 0
+        ep_reward = 0
+        ep_pos = 0
+        ep_angle = 0
 
         scenery.reset()
         state = scenery.get_current_state()
         agent.update_target_networks()
 
-        if episode_count >= episodes:
+        if episodes_count >= episodes:
             n += 1
             if n >= repetitions:
                 break
 
-            print("~~~~~ Repetition", n)
+            print(f"~~~~~ Repetition {n}")
             agent = new_ddpg()
-            episode_count = 0
+            episodes_count = 0
 
     text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
+    surface.blit(text, (5, 25))
+    text = font.render("Episode: %d" % episodes_count, True, (255, 255, 255))
     surface.blit(text, (5, 5))
     text_y = 5
     if pygame.time.get_ticks() % 1000 <= 500:
@@ -181,8 +190,8 @@ while run:
 
     if TRACE:
         print(f"~~~~~ Action to apply         : {action}")
-        print(f"~~~~~ Episode reward          : {episode_reward_accumulator}")
-        print(f"~~~~~ Action after application: {scenery._action}")
+        print(f"~~~~~ Episode reward          : {ep_reward}")
+        print(f"~~~~~ Action post apply       : {scenery._action}")
         print(f"~~~~~ State after tick        : {state}")
 
     clock.tick(50)
@@ -190,10 +199,10 @@ while run:
 
 pygame.quit()
 
-print("~~~~~ Results per episode")
+print("~~~~~ Rewards per episode")
 print("~~~~~ Start of results:")
 for i in range(episodes):
-    print(rewards[i])
+    print(rewards_episodes[i])
 print("~~~~~ End of results.")
 
 if SAVE_NEW_WEIGHTS:

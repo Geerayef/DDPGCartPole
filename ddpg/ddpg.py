@@ -11,7 +11,7 @@ from util.ornstein_uhlenbeck import OUNoise
 class DDPG:
     def __init__(
             self, num_inputs, num_outputs, noise,
-            actor_layers, critic_layers, memory_size,
+            actor_layers, critic_layers, memory_size, noise_decay, my_ou,
             actor_lr=0.0001, critic_lr=0.001
     ):
         assert num_inputs > 0
@@ -24,16 +24,18 @@ class DDPG:
         # Ornstein-Uhlenbeck (per DDPG paper) in 2 flavors: tf_agents
         # & my implementation
         self._noise = noise
-        np.random.seed(5)
-        self.OU = common.ornstein_uhlenbeck_process(
-            initial_value=0.0,
-            damping=0.12,
-            stddev=0.2,
-            seed=np.random.normal(),
-            scope='ornstein_uhlenbeck_noise'
-        )
-        self.episode_counter = 0
-        self.myOUNoise = OUNoise(action_space_size=1)
+        np.random.seed(noise)
+        if my_ou:
+            self.episode_counter = 0
+            self.myOUNoise = OUNoise(action_space_size=1, decay_period=noise_decay)
+        else:
+            self.OU = common.ornstein_uhlenbeck_process(
+                    initial_value=0.0,
+                    damping=0.15,
+                    stddev=0.2,
+                    seed=np.random.normal(),
+                    scope='ornstein_uhlenbeck_noise'
+                    )
 
         # Construct the actor.
         self.actor = Sequential()
@@ -84,15 +86,15 @@ class DDPG:
         self.actor.save_weights(filename + "-actor.h5")
         self.critic.save_weights(filename + "-critic.h5")
 
-    def action(self, state):
+    def action(self, state, time):
         # Let the actor return an action for the given state.
         action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0] 
 
         # Add Ornstein-Uhlenbeck noise (tf-agents & myOUNoise)
         for i in range(len(action)):
             action[i] = np.clip(action[i], -1, 1)
-            action[i] += self.OU.__call__()
-            # action[i] = self.myOUNoise.get_action(action[i])
+            # action[i] += self.OU.__call__()
+            action[i] = self.myOUNoise.get_action(action[i], time)
             action[i] = np.clip(action[i], -1, 1)
 
         return action
@@ -109,7 +111,7 @@ class DDPG:
 
         self._previous_state = new_state
 
-    def train(self, batch_size=64, gamma=0.99):
+    def train(self, batch_size=1024, gamma=0.97):
         # Are there enough samples for a batch?
         if len(self._memory) < batch_size:
             return

@@ -1,29 +1,49 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from subprocess import check_output
+from sys import argv
 
 
 line_data_location = "/home/tibor/Programming/bachelors/tibor-novakovic-diploma/LineData/"
 line_data_dir = os.listdir(line_data_location)
+
+# Boolean: 0, 1
+plot_normalized = False
+normalize = int(argv[1])
+if normalize != 0 and normalize != 1:
+    print(f"~~~~~ Wrong argument to plot_normalized: {normalize}. Must be 0 or 1.")
+    raise SystemExit()
+else:
+    if normalize == 0:
+        plot_normalized = False
+    else:
+        plot_normalized = True
+
 lines = []
-normalized_arrays = []
+normalized_lines = []
 
+# -------------------------------------------------------------------------------- #
 
-# Organize plotting data
-def line_data_to_list():
+# ~  Function definitions
+
+def count_file_lines(filename):
+    return int(check_output(["wc", "-l", filename]).split()[0])
+
+def line_data_to_array():
     tmp = []
     file_count = 0
     for file in line_data_dir:
         f = os.path.join(line_data_location, file)
         if os.path.isfile(f):
-            line_data = open(f, 'r')
-            for txt_line in line_data:
-                tmp.append(float(txt_line))
+            file_lines = count_file_lines(f)
+            data_file = open(f, 'r')
+            for datapoint in data_file:
+                tmp.append(float(datapoint))
 
-            if len(tmp) == 5000:
-                # print(f"~~~~~ {f} converted to list.")
+            if len(tmp) == file_lines:
+                lines.append(np.array(tmp))
                 file_count += 1
-                lines.append(tmp)
                 tmp = []
             else:
                 print(f"~~~~~ Failed to convert {f} to list ( float conversion )")
@@ -36,25 +56,49 @@ def normalize_array(array):
     return ( array / max_lmnt )
 
 
-line_data_to_list()
+# -------------------------------------------------------------------------------- #
 
-lines_arrays = [np.array(x) for x in lines]
-for line_arr in lines_arrays:
-    temp = normalize_array(line_arr)
-    normalized_arrays.append(temp)
+# ~  Main function calls
 
-lines_mean = np.mean(normalized_arrays, axis=0)
+line_data_to_array()
 
+# -------------------------------------------------------------------------------- #
+
+# ~  Normalize
+
+if plot_normalized:
+    for line in lines:
+        tmp = normalize_array(line)
+        normalized_lines.append(tmp)
+
+# -------------------------------------------------------------------------------- #
+
+# ~  Plot
+
+# Mean of lines
+if plot_normalized:
+    lines_mean = np.mean(normalized_lines, axis=0)
+else:
+    lines_mean = np.mean(lines, axis=0)
 plt.plot(lines_mean)
-plt.xlabel('Index')
-plt.ylabel('Mean Value')
-plt.title('Mean: Normalized average reward lines')
 
-lines_stddev = np.std(normalized_arrays)
+# Individual lines
+# if plot_normalized:
+#     for line in normalized_lines:
+#         plt.plot(line)
+# else:
+#     for line in lines:
+#         plt.plot(line)
+
+# Standard deviation
+if plot_normalized:
+    lines_stddev = np.std(normalized_lines)
+else:
+    lines_stddev = np.std(lines)
 print(f"~~~~~ Standard deviation {lines_stddev}")
 
-# for line_data in lines:
-#     ypoints = np.array(line_data)
-#     plt.plot(ypoints)
 
+plt.xlabel('Episodes')
+plt.ylabel('Reward')
+plt.title('Reward growth during training')
 plt.show()

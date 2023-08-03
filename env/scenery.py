@@ -28,7 +28,7 @@ class Scenery:
     _p_data = 0
     _start_time = 0
     _max_ang_velo = 0.1
-    _max_steps = 8192
+    _max_steps = 200
 
     def __init__(self, surface):
         self._canvas = Canvas(surface)
@@ -47,29 +47,24 @@ class Scenery:
     def sigmoid(self, x):
         return ( 1.0 / (1.0 + math.exp(-x)) )
 
-    def get_reward(self, state, terminated, steps):
+    def get_reward(self, state, terminated):
         position, velocity, angle, angular_velocity = state
-        a = abs(angular_velocity)
-        self._max_ang_velo = a if a > self._max_ang_velo else self._max_ang_velo
+
+        # a = abs(angular_velocity)
+        # self._max_ang_velo = a if a > self._max_ang_velo else self._max_ang_velo
+        # ang_velo_norm = abs(angular_velocity) / self._max_ang_velo
+        # swing_speed = self.sigmoid(ang_velo_norm)
 
         # time = steps / self._max_steps
-        # upright = 1 - abs(angle) / self._cart.theta_threshold
-
-        ang_velo_norm = abs(angular_velocity) / self._max_ang_velo
-        swing_speed = self.sigmoid(ang_velo_norm)
-
-        upright = np.cos(np.radians(abs(angle)))
-        centred = 1 - abs(position) / self._cart.position_range
-
-        reward = ( 5 * upright ) + ( 3 * ( 1 - swing_speed ) ) + ( 0.5 * centred )
+        # upright = abs(angle) / self._cart.theta_threshold
+        # upright = np.cos(np.radians(abs(angle)))
+        # centred = 1 - abs(position) / self._cart.position_range
 
         if terminated:
-            # fallen = abs(angle) / self._cart.theta_threshold
-            # off_centre = abs(position) / self._cart.position_range
-            # reward -= fallen + ( 0.5 * off_centre ) + ( 1 - time )
-            reward -= ( 1 + ( 1 - upright ) + ( 1 - centred ) )
+            return 0.
 
-        return reward
+        return 1.
+
 
     def switch_automatic(self):
         self._automatic = not self._automatic
@@ -138,7 +133,7 @@ class Scenery:
         if self._action < -1:
             self._action = -1
 
-    def tick(self, time):
+    def tick(self, time, steps):
         if self._frozen:
             self._frozen = False
 
@@ -146,15 +141,16 @@ class Scenery:
             self._cart.tick(
                 self._action * self._manual_force,
                 self.gravity,
-                time
+                time,
+                steps
             )
         if self._recording:
             self.save_frame()
         elif self._playing:
             self.load_frame()
 
-    def post_tick(self, steps):
-        reward = self.get_reward(self.get_current_state(), self._cart.terminated, steps)
+    def post_tick(self):
+        reward = self.get_reward(self.get_current_state(), self._cart.terminated)
         return self.get_current_state(), reward, self._cart.terminated
 
     def draw(self, canvas=None):

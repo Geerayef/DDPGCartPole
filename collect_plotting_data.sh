@@ -38,7 +38,7 @@ _check_conda_env
 
 if [ "$conda_env" == "tf" ]
 then
-    until [ $session == 4 ]
+    until [ $session == 2 ]
     do
         # echo Hello
         python3 -m ddpg.cartpole | awk '/~~~~~ Start of results:/,/~~~~~ End of results./' >> session_results_per_episode.txt

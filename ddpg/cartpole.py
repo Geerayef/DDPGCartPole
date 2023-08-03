@@ -12,10 +12,11 @@ def new_ddpg(episodes):
         num_inputs=4,
         num_outputs=1,
         noise=[1],
+        tau=0.01,
         actor_layers=[64, 32],
         critic_layers=[64, 32],
         memory_size=8192,
-        noise_decay=1000,
+        noise_decay=episodes,
         my_ou=True,
     )
 
@@ -89,11 +90,11 @@ n = 0
 # Metrics
 ep_reward = 0
 rewards_episodes = np.zeros(episodes)
-rewards_avg_step = np.zeros(episodes)
-pos_avg_episodes   = np.zeros(episodes)
-ep_pos = 0
-angle_avg_episodes = np.zeros(episodes)
-ep_angle = 0
+# rewards_avg_step = np.zeros(episodes)
+# pos_avg_episodes   = np.zeros(episodes)
+# ep_pos = 0
+# angle_avg_episodes = np.zeros(episodes)
+# ep_angle = 0
 
 agent = new_ddpg(episodes)
 if agent.load_weights("cartpole-model"):
@@ -125,35 +126,39 @@ while run:
     action = agent.action(state, agent.episode_counter)
 
     scenery._apply_action(action[0])
-    scenery.tick(dt / 1000.0)
-    state, step_reward, terminated = scenery.post_tick(episode_steps)
+    scenery.tick(dt / 1000.0, episode_steps)
+
+    state, step_reward, terminated = scenery.post_tick()
 
     agent.feed(action, step_reward, state)
     agent.train()
+    agent.soft_update_target_networks()
 
     ep_reward += step_reward
-    ep_pos += state[0]
-    ep_angle += state[2]
+    # ep_pos += state[0]
+    # ep_angle += state[2]
     episode_steps += 1
-        
+
     scenery.draw()
 
     if terminated:
         rewards_episodes[episodes_count] += ep_reward
-        rewards_avg_step[episodes_count] += ep_reward / episode_steps
-        pos_avg_episodes[episodes_count] += ep_pos / episode_steps
-        angle_avg_episodes[episodes_count] += ep_angle / episode_steps
+        # rewards_avg_step[episodes_count] += ep_reward / episode_steps
+        # pos_avg_episodes[episodes_count] += ep_pos / episode_steps
+        # angle_avg_episodes[episodes_count] += ep_angle / episode_steps
 
         episodes_count += 1
         agent.episode_counter += 1
         episode_steps = 0
         ep_reward = 0
-        ep_pos = 0
-        ep_angle = 0
+        # ep_pos = 0
+        # ep_angle = 0
 
         scenery.reset()
         state = scenery.get_current_state()
-        agent.update_target_networks()
+
+        # Hard update target networks
+        # agent.update_target_networks()
 
         if episodes_count >= episodes:
             n += 1
@@ -164,7 +169,7 @@ while run:
             agent = new_ddpg()
             episodes_count = 0
 
-    text = font.render("FPS: %.1f" % avg_fps, True, (255, 255, 255))
+    text = font.render("Ep. reward: %.1f" % rewards_episodes[episodes_count - 1], True, (255, 255, 255))
     surface.blit(text, (5, 25))
     text = font.render("Episode: %d" % episodes_count, True, (255, 255, 255))
     surface.blit(text, (5, 5))
@@ -189,10 +194,10 @@ while run:
         handle_recording()
 
     if TRACE:
-        print(f"~~~~~ Action to apply         : {action}")
-        print(f"~~~~~ Episode reward          : {ep_reward}")
-        print(f"~~~~~ Action post apply       : {scenery._action}")
-        print(f"~~~~~ State after tick        : {state}")
+        print(f"~~~~~ Action to apply   : {action}")
+        print(f"~~~~~ Episode reward    : {ep_reward}")
+        print(f"~~~~~ Action post apply : {scenery._action}")
+        print(f"~~~~~ State after tick  : {state}")
 
     clock.tick(50)
     time.sleep(0.02)

@@ -10,16 +10,18 @@ from util.ornstein_uhlenbeck import OUNoise
 
 class DDPG:
     def __init__(
-            self, num_inputs, num_outputs, noise,
+            self, num_inputs, num_outputs, noise, tau,
             actor_layers, critic_layers, memory_size, noise_decay, my_ou,
-            actor_lr=0.0001, critic_lr=0.001
+            actor_lr=0.0001, critic_lr=0.0002
     ):
         assert num_inputs > 0
         assert num_outputs > 0
         assert len(noise) == num_outputs
         assert len(actor_layers) > 0
         assert len(critic_layers) > 0
+        assert tau > 0
 
+        self.tau = tau
         # Noise: normal (parameter)
         # Ornstein-Uhlenbeck (per DDPG paper) in 2 flavors: tf_agents
         # & my implementation
@@ -111,7 +113,7 @@ class DDPG:
 
         self._previous_state = new_state
 
-    def train(self, batch_size=1024, gamma=0.97):
+    def train(self, batch_size=128, gamma=0.97):
         # Are there enough samples for a batch?
         if len(self._memory) < batch_size:
             return
@@ -149,7 +151,7 @@ class DDPG:
             critic_values = self.critic(
                 tf.concat([state_batch, action_batch], axis=1), training=True)
             target_critic_values = reward_batch + gamma * self.target_critic(
-                tf.concat([next_state_batch, self.target_actor(next_state_batch, training=True)], axis=1), training=True
+                tf.concat([next_state_batch, self.target_actor(next_state_batch)], axis=1)
             )
             critic_loss = tf.math.reduce_mean(
                 tf.math.square(target_critic_values - critic_values))
@@ -161,3 +163,13 @@ class DDPG:
     def update_target_networks(self):
         self.target_actor.set_weights(self.actor.get_weights())
         self.target_critic.set_weights(self.critic.get_weights())
+
+    def soft_update_target_networks(self):
+        # Soft update actor
+        for (a, b) in zip(self.target_actor.trainable_variables, self.actor.trainable_variables):
+            a.assign(self.tau * b + (1 - self.tau) * a)
+
+        # Soft update critic
+        for (a, b) in zip(self.target_critic.trainable_variables, self.critic.trainable_variables):
+            a.assign(self.tau * b + (1 - self.tau) * a)
+

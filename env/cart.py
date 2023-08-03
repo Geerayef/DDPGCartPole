@@ -9,14 +9,14 @@ class Cart:
     pole_length = 1.0
     # Cart
     position = (0.0, 0.0)
-    position_range = 4.0
+    position_range = 3.0
     speed = 0.0
     acceleration = 0.0
     # Pole
     theta = 0.0
     theta_speed = 0.0
     theta_acceleration = 0.0
-    theta_threshold = 70.
+    theta_threshold = 12.
 
     terminated = False
     damping = 0
@@ -24,6 +24,7 @@ class Cart:
     actions_per_second = 20
     _time_since_action = 0.0
     _last_action = 0.0
+    MAX_STEPS = 500
 
     def __init__(self):
         pass
@@ -70,7 +71,7 @@ class Cart:
         y1 = self.width / 6 + wheel
         return x0 <= x <= x1 and y0 <= y <= y1
 
-    def tick(self, f, g, dt):
+    def tick(self, f, g, dt, steps):
         self._time_since_action += dt
         (x, y) = self.position
 
@@ -110,6 +111,7 @@ class Cart:
                 or self.position[0] < -self.position_range
                 or self.theta > self.theta_threshold
                 or self.theta < -self.theta_threshold
+                or steps > self.MAX_STEPS
         )
         if TRACE and self.terminated:
             print(f"~~~~~ TERMINATED - position: {self.position[0]}; Angle: {self.theta}")

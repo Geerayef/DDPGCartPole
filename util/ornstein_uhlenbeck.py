@@ -3,8 +3,8 @@ import numpy as np
 
 class OUNoise:
     def __init__(
-            self, action_space_size, decay_period, mu=0.0, theta=0.12,
-            max_sigma=0.5, min_sigma=0.05
+            self, action_space_size, decay_period, mu=0.0, theta=0.1,
+            max_sigma=0.25, min_sigma=0.05
     ):
         self.mu = mu
         self.theta = theta

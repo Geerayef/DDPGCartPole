@@ -16,7 +16,7 @@ class Cart:
     theta = 0.0
     theta_speed = 0.0
     theta_acceleration = 0.0
-    theta_threshold = 12.
+    theta_threshold = 12.0
 
     terminated = False
     damping = 0
@@ -24,10 +24,9 @@ class Cart:
     actions_per_second = 20
     _time_since_action = 0.0
     _last_action = 0.0
-    MAX_STEPS = 500
 
-    def __init__(self):
-        pass
+    def __init__(self, max_steps):
+        self._max_steps = max_steps
 
     def get_current_state(self):
         return self.position[0], self.speed, self.theta, self.theta_speed
@@ -111,7 +110,7 @@ class Cart:
                 or self.position[0] < -self.position_range
                 or self.theta > self.theta_threshold
                 or self.theta < -self.theta_threshold
-                or steps > self.MAX_STEPS
+                or steps > self._max_steps
         )
         if TRACE and self.terminated:
             print(f"~~~~~ TERMINATED - position: {self.position[0]}; Angle: {self.theta}")

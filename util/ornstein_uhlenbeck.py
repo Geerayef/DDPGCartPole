@@ -4,7 +4,7 @@ import numpy as np
 class OUNoise:
     def __init__(
             self, action_space_size, decay_period, mu=0.0, theta=0.1,
-            max_sigma=0.25, min_sigma=0.05
+            max_sigma=0.35, min_sigma=0.05
     ):
         self.mu = mu
         self.theta = theta
@@ -13,8 +13,8 @@ class OUNoise:
         self.min_sigma = min_sigma
         self.decay_period = decay_period
         self.action_dim = action_space_size
-        self.low = -1
-        self.high = 1
+        self.low = -0.5
+        self.high = 0.5
         self.reset()
 
     def reset(self):

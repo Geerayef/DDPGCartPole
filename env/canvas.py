@@ -92,6 +92,8 @@ class Canvas:
         else:
             rx, ry = self.rotate(position, anchor, rotation)
             sx, sy = self.to_screen((rx, ry))
+        sx = int(sx)
+        sy = int(sy)
         sr = int(round(radius * self.ppm))
         pygame.gfxdraw.aacircle(self.surface, sx, sy, sr, color)
         pygame.gfxdraw.filled_circle(self.surface, sx, sy, sr, color)

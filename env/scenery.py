@@ -28,13 +28,12 @@ class Scenery:
     _p_data = 0
     _start_time = 0
     _max_ang_velo = 0.1
-    _max_steps = 200
 
-    def __init__(self, surface):
+    def __init__(self, max_steps, surface):
         self._canvas = Canvas(surface)
         self._canvas.set_vertical_offset_at(7.0 / 8.0)
-        self._cart = Cart()
-        self._cart.position = (0.0, 0.0)
+        self._cart = Cart(max_steps)
+        self._max_steps = max_steps
 
     def reset(self):
         self._action = 0
@@ -47,7 +46,7 @@ class Scenery:
     def sigmoid(self, x):
         return ( 1.0 / (1.0 + math.exp(-x)) )
 
-    def get_reward(self, state, terminated):
+    def get_reward(self, state, terminated, steps, action):
         position, velocity, angle, angular_velocity = state
 
         # a = abs(angular_velocity)
@@ -56,14 +55,12 @@ class Scenery:
         # swing_speed = self.sigmoid(ang_velo_norm)
 
         # time = steps / self._max_steps
-        # upright = abs(angle) / self._cart.theta_threshold
+        upright = 1 - abs(angle) / self._cart.theta_threshold
         # upright = np.cos(np.radians(abs(angle)))
-        # centred = 1 - abs(position) / self._cart.position_range
+        centred = 1 - abs(position) / self._cart.position_range
 
-        if terminated:
-            return 0.
-
-        return 1.
+        reward = ( 0.5 * upright ) + ( 0.5 * centred )
+        return -1 if terminated else reward
 
 
     def switch_automatic(self):
@@ -149,9 +146,10 @@ class Scenery:
         elif self._playing:
             self.load_frame()
 
-    def post_tick(self):
-        reward = self.get_reward(self.get_current_state(), self._cart.terminated)
-        return self.get_current_state(), reward, self._cart.terminated
+    def post_tick(self, steps, action):
+        current_state = self.get_current_state()
+        reward = self.get_reward(current_state, self._cart.terminated, steps, action)
+        return current_state, reward, self._cart.terminated
 
     def draw(self, canvas=None):
         active_canvas = canvas

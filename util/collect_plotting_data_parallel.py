@@ -16,11 +16,11 @@ def task():
 
 
 tasks = []
-max_processes = 2
+num_processes = 2
 all_processes = []
 
 # Run this task with max times
-for i in range(0, max_processes):
+for i in range(0, num_processes):
     tasks.append(task)
 
 for func in tasks:

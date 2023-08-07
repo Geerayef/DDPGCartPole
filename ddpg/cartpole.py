@@ -9,7 +9,7 @@ from util.flags import TRACE, RECORD, SAVE_NEW_WEIGHTS, PREFILL_MEMORY
 
 # ~  Constants
 MAX_STEPS = 500
-EPISODES = 3000
+EPISODES = 2000
 MEMORY_SIZE = 65536
 WINDOW_DIM = (1000, 300)
 
@@ -154,11 +154,11 @@ n = 0
 # Metrics
 ep_reward = 0
 rewards_episodes = np.zeros(EPISODES)
-# rewards_avg_step = rewards_episodes
-# pos_avg_episodes   = rewards_episodes
-# ep_pos = 0
-# angle_avg_episodes = rewards_episodes
-# ep_angle = 0
+rewards_avg_step = rewards_episodes
+pos_avg_episodes = rewards_episodes
+ep_pos = 0
+angle_avg_episodes = rewards_episodes
+ep_angle = 0
 
 
 # ~  Agent
@@ -216,33 +216,29 @@ while run:
 
     agent.feed(action, step_reward, state)
     agent.train()
-    # agent.soft_update_target_networks()
 
     ep_reward += step_reward
-    # ep_pos += state[0]
-    # ep_angle += state[2]
+    ep_pos += state[0]
+    ep_angle += state[2]
     episode_steps += 1
 
     scenery.draw()
 
     if terminated:
         rewards_episodes[episodes_count] += ep_reward
-        # rewards_avg_step[episodes_count] += ep_reward / episode_steps
-        # pos_avg_episodes[episodes_count] += ep_pos / episode_steps
-        # angle_avg_episodes[episodes_count] += ep_angle / episode_steps
+        rewards_avg_step[episodes_count] += ep_reward / episode_steps
+        pos_avg_episodes[episodes_count] += ep_pos / episode_steps
+        angle_avg_episodes[episodes_count] += ep_angle / episode_steps
 
         episodes_count += 1
         # agent.episode_counter = episodes_count
         episode_steps = 0
         ep_reward = 0
-        # ep_pos = 0
-        # ep_angle = 0
+        ep_pos = 0
+        ep_angle = 0
 
         scenery.reset()
         state = scenery.get_current_state()
-
-        # Hard update target networks
-        # agent.update_target_networks()
 
         if episodes_count >= EPISODES:
             n += 1
@@ -253,10 +249,10 @@ while run:
             agent = new_ddpg()
             episodes_count = 0
 
-    text = font.render("Max reward: %.1f" % np.max(rewards_episodes), True, (255, 255, 255))
-    surface.blit(text, (775, 5))
-    text = font.render("Ep. reward: %.1f" % rewards_episodes[episodes_count - 1], True, (255, 255, 255))
-    surface.blit(text, (5, 25))
+    # text = font.render("Max reward: %.1f" % np.max(rewards_episodes), True, (255, 255, 255))
+    # surface.blit(text, (775, 5))
+    # text = font.render("Ep. reward: %.1f" % rewards_episodes[episodes_count - 1], True, (255, 255, 255))
+    # surface.blit(text, (5, 25))
     text = font.render("Episode: %d" % episodes_count, True, (255, 255, 255))
     surface.blit(text, (5, 5))
     text_y = 5
@@ -290,12 +286,16 @@ while run:
 
 pygame.quit()
 
-print("~~~~~ DONE ~~~~~")
-print("~~~~~ Rewards per episode")
-print("~~~~~ Start of results:")
-for i in range(EPISODES):
-    print(rewards_episodes[i])
-print("~~~~~ End of results.")
+# print("~~~~~ DONE ~~~~~")
+# print("~~~~~ Rewards per episode")
+# print("~~~~~ Start of results:")
+# for i in range(EPISODES):
+#     print(rewards_episodes[i])
+# print("~~~~~ End of results.")
+
+np.save("reward_step.npy", rewards_avg_step)
+np.save("pos_avg.npy", pos_avg_episodes)
+np.save("angle_avg.npy", angle_avg_episodes)
 
 if SAVE_NEW_WEIGHTS:
     agent.save_weights("cartpole-model")

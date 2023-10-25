@@ -37,7 +37,7 @@ class DDPG:
         np.random.seed(seed)
 
         if my_ou == 0:
-            self.gauss = GaussianNoise(num_outputs, (3 * noise_decay)/4 )
+            self.gauss = GaussianNoise(num_outputs, (3 * noise_decay)/4)
         elif my_ou == 1:
             self.myOUNoise = OUNoise(action_space_size=1, decay_period=noise_decay)
         elif my_ou == 2:
@@ -89,7 +89,7 @@ class DDPG:
         if ep_count > self._episode_counter:
             self._episode_counter += 1
             self.gauss.reset()
-        
+
         for i in range(len(action)):
             action[i] = np.clip(action[i], -1, 1)
             # action[i] += self.OU.__call__()
@@ -134,12 +134,7 @@ class DDPG:
 
         # Train the critic.
         with tf.GradientTape() as tape:
-            critic_values = self.critic(
-                tf.concat(
-                    [state_batch, action_batch]
-                    , axis=1)
-                , training=True
-                )
+            critic_values = self.critic(tf.concat([state_batch, action_batch], axis=1), training=True)
             target_critic_values = reward_batch + self._gamma * self.target_critic(
                 tf.concat([next_state_batch, self.target_actor(next_state_batch)], axis=1)
             )
@@ -152,9 +147,7 @@ class DDPG:
             with tf.GradientTape() as tape:
                 critic_values = self.critic(
                     tf.concat(
-                        [state_batch, self.actor(state_batch, training=True)]
-                            , axis=1)
-                        , training=True
+                        [state_batch, self.actor(state_batch, training=True)], axis=1), training=True
                         )
                 actor_loss = -tf.math.reduce_mean(critic_values)
                 actor_gradients = tape.gradient(actor_loss, self.actor.trainable_variables)

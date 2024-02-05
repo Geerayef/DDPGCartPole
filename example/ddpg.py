@@ -9,9 +9,15 @@ from tensorflow.keras.optimizers import Adam
 
 class DDPG:
     def __init__(
-            self, num_inputs, num_outputs, noise,
-            actor_layers, critic_layers, memory_size,
-            actor_lr=0.001, critic_lr=0.001
+        self,
+        num_inputs,
+        num_outputs,
+        noise,
+        actor_layers,
+        critic_layers,
+        memory_size,
+        actor_lr=0.001,
+        critic_lr=0.001,
     ):
         assert num_inputs > 0
         assert num_outputs > 0
@@ -25,22 +31,23 @@ class DDPG:
         self.actor = Sequential()
         self.actor.add(Dense(actor_layers[0], input_shape=(num_inputs,)))
         for i in range(1, len(actor_layers)):
-            self.actor.add(Activation('relu'))
+            self.actor.add(Activation("relu"))
             self.actor.add(Dense(actor_layers[i]))
-        self.actor.add(Activation('relu'))
+        self.actor.add(Activation("relu"))
         self.actor.add(Dense(num_outputs))
-        self.actor.add(Activation('tanh'))
+        self.actor.add(Activation("tanh"))
 
         # Construct the critic.
         self.critic = Sequential()
         self.critic.add(
-            Dense(critic_layers[0], input_shape=(num_inputs + num_outputs,)))
+            Dense(critic_layers[0], input_shape=(num_inputs + num_outputs,))
+        )
         for i in range(1, len(critic_layers)):
-            self.critic.add(Activation('relu'))
+            self.critic.add(Activation("relu"))
             self.critic.add(Dense(critic_layers[i]))
-        self.critic.add(Activation('relu'))
+        self.critic.add(Activation("relu"))
         self.critic.add(Dense(1))
-        self.critic.add(Activation('linear'))
+        self.critic.add(Activation("linear"))
 
         # Clone the actor and the critic as their target models.
         self.target_actor = clone_model(self.actor)
@@ -72,8 +79,7 @@ class DDPG:
 
     def action(self, state):
         # Let the actor return an action for the given state.
-        action = self.actor(tf.convert_to_tensor(
-            [state], dtype=tf.float32)).numpy()[0]
+        action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0]
 
         # Add noise.
         for i in range(len(action)):
@@ -85,11 +91,14 @@ class DDPG:
     def feed(self, action, reward, new_state):
         if self._previous_state != []:
             if len(self._memory) < self._memory_size:
-                self._memory.append(
-                    (self._previous_state, action, reward, new_state))
+                self._memory.append((self._previous_state, action, reward, new_state))
             else:
                 self._memory[self._memory_index] = (
-                    self._previous_state, action, reward, new_state)
+                    self._previous_state,
+                    action,
+                    reward,
+                    new_state,
+                )
             self._memory_index = (self._memory_index + 1) % self._memory_size
 
         self._previous_state = new_state
@@ -105,7 +114,9 @@ class DDPG:
         reward_batch = []
         next_state_batch = []
 
-        for (state, action, reward, next_state) in random.sample(self._memory, batch_size):
+        for state, action, reward, next_state in random.sample(
+            self._memory, batch_size
+        ):
             state_batch.append(state)
             action_batch.append(action)
             reward_batch.append([reward])
@@ -114,37 +125,35 @@ class DDPG:
         state_batch = tf.convert_to_tensor(state_batch, dtype=tf.float32)
         action_batch = tf.convert_to_tensor(action_batch, dtype=tf.float32)
         reward_batch = tf.convert_to_tensor(reward_batch, dtype=tf.float32)
-        next_state_batch = tf.convert_to_tensor(
-            next_state_batch, dtype=tf.float32)
+        next_state_batch = tf.convert_to_tensor(next_state_batch, dtype=tf.float32)
 
         # Train the actor.
         with tf.GradientTape() as tape:
             critic_values = self.critic(
                 tf.concat(
-                    [
-                        state_batch,
-                        self.actor(state_batch, training=True)
-                    ],
-                    axis=1
+                    [state_batch, self.actor(state_batch, training=True)], axis=1
                 ),
-                training=True
+                training=True,
             )
             target_critic_values = reward_batch + gamma * self.target_critic(
                 tf.concat(
                     [
                         next_state_batch,
-                        self.target_actor(next_state_batch, training=True)
+                        self.target_actor(next_state_batch, training=True),
                     ],
-                    axis=1
+                    axis=1,
                 ),
-                training=True
+                training=True,
             )
             critic_loss = tf.math.reduce_mean(
-                tf.math.square(target_critic_values - critic_values))
+                tf.math.square(target_critic_values - critic_values)
+            )
             critic_gradients = tape.gradient(
-                critic_loss, self.critic.trainable_variables)
+                critic_loss, self.critic.trainable_variables
+            )
             self.critic_optimizer.apply_gradients(
-                zip(critic_gradients, self.critic.trainable_variables))
+                zip(critic_gradients, self.critic.trainable_variables)
+            )
 
     def update_target_networks(self):
         self.target_actor.set_weights(self.actor.get_weights())

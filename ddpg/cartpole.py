@@ -16,7 +16,8 @@ WINDOW_DIM = (1000, 300)
 
 # -------------------------------------------------------------------------------- #
 
-# ~ Util Functions
+# ~  Util Functions
+
 
 def handle_recording():
     for event in pygame.event.get():
@@ -39,10 +40,12 @@ def handle_recording():
                     (width, height) = font.size(msg)
                     text = font.render(msg, True, (255, 255, 255))
                     surface.blit(
-                            text,
-                            ((surface.get_width() - width) / 2,
-                             (surface.get_height() - height) / 2)
-                            )
+                        text,
+                        (
+                            (surface.get_width() - width) / 2,
+                            (surface.get_height() - height) / 2,
+                        ),
+                    )
                     pygame.display.update()
                     scenery.convert_recording(filename)
 
@@ -68,7 +71,7 @@ def fill_memory(memory_size, scenery, agent, clock):
     i = 0
     j = 0
     print("~~~~~ Filling memory")
-    while (len(agent._memory) < memory_size):
+    while len(agent._memory) < memory_size:
         pygame.event.pump()
         dt = clock.get_time()
         action = agent.action(state, i)
@@ -127,6 +130,7 @@ avg_fps = 0
 
 # ~  Algorithm
 
+
 def new_ddpg():
     return DDPG(
         num_inputs=4,
@@ -137,11 +141,11 @@ def new_ddpg():
         batch_size=256,
         memory_size=MEMORY_SIZE,
         noise_decay=EPISODES,
-        my_ou=0,    # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
+        my_ou=0,  # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
         actor_layers=[128, 32],
         critic_layers=[128, 32],
         actor_lr=0.0002,
-        critic_lr=0.0003
+        critic_lr=0.0003,
     )
 
 
@@ -174,9 +178,9 @@ if PREFILL_MEMORY:
     state = scenery.get_current_state()
 
     scenery, agent = fill_memory(MEMORY_SIZE, scenery, agent, clock)
-    print(f"~~~~~ Resetting environment for training with full memory")
+    print("~~~~~ Resetting environment for training with full memory")
 
-# ~ Set up for training
+# ~  Set up for training
 
 scenery = Scenery(MAX_STEPS, surface)
 scenery.reset()

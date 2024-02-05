@@ -44,7 +44,7 @@ class Scenery:
         return self._cart.get_current_state()
 
     def sigmoid(self, x):
-        return ( 1.0 / (1.0 + math.exp(-x)) )
+        return 1.0 / (1.0 + math.exp(-x))
 
     def get_reward(self, state, terminated, steps, action):
         position, velocity, angle, angular_velocity = state
@@ -59,9 +59,8 @@ class Scenery:
         # upright = np.cos(np.radians(abs(angle)))
         centred = 1 - abs(position) / self._cart.position_range
 
-        reward = ( 0.5 * upright ) + ( 0.5 * centred )
+        reward = (0.5 * upright) + (0.5 * centred)
         return -1 if terminated else reward
-
 
     def switch_automatic(self):
         self._automatic = not self._automatic
@@ -136,10 +135,7 @@ class Scenery:
 
         if not self._frozen:
             self._cart.tick(
-                self._action * self._manual_force,
-                self.gravity,
-                time,
-                steps
+                self._action * self._manual_force, self.gravity, time, steps
             )
         if self._recording:
             self.save_frame()
@@ -212,7 +208,7 @@ class Scenery:
     def read_float(self):
         if self._p_data + 4 >= len(self._data):
             return float(0), True
-        data = self._data[self._p_data:self._p_data + 4]
+        data = self._data[self._p_data : self._p_data + 4]
         self._p_data += 4
         (value,) = struct.unpack("f", data)
         return value, False
@@ -250,8 +246,7 @@ class Scenery:
 
     def load_frame(self, current_time=None):
         if current_time is None:
-            current_time = float(pygame.time.get_ticks() -
-                                 self._start_time) / 1000.0
+            current_time = float(pygame.time.get_ticks() - self._start_time) / 1000.0
         frame_valid = False
         while self._playing and not frame_valid:
             time, eof = self.read_float()
@@ -343,8 +338,7 @@ class Scenery:
         while self._playing:
             self.load_frame(float(count) / float(fps))
             self.draw(canvas)
-            pygame.image.save(canvas.surface, "_" +
-                              str(count + 1).zfill(6) + ".png")
+            pygame.image.save(canvas.surface, "_" + str(count + 1).zfill(6) + ".png")
             count += 1
 
         (x, y) = canvas.get_size()

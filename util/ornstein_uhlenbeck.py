@@ -3,8 +3,13 @@ import numpy as np
 
 class OUNoise:
     def __init__(
-            self, action_space_size, decay_period, mu=0.0, theta=0.1,
-            max_sigma=0.35, min_sigma=0.05
+        self,
+        action_space_size,
+        decay_period,
+        mu=0.0,
+        theta=0.1,
+        max_sigma=0.35,
+        min_sigma=0.05,
     ):
         self.mu = mu
         self.theta = theta
@@ -24,7 +29,9 @@ class OUNoise:
         x = self.state
         dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(self.action_dim)
         self.state = x + dx
-        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, self.time / self.decay_period)
+        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(
+            1.0, self.time / self.decay_period
+        )
         return self.state
 
     def get_action(self, action, time):

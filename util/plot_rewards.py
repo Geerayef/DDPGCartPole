@@ -5,14 +5,14 @@ from subprocess import check_output
 from sys import argv
 
 
-lines            = []
+lines = []
 normalized_lines = []
-position         = []
-angle            = []
-reward_step      = []
+position = []
+angle = []
+reward_step = []
 
 line_data_location = ""
-line_data_dir      = None
+line_data_dir = None
 
 plot_normalized = False
 normalize = int(argv[1])
@@ -33,16 +33,21 @@ if metrics is not None and metrics != 0 and metrics != 1:
 else:
     if metrics == 0:
         plot_metrics = False
-        line_data_location = "/home/tibor/Programming/bachelors/tibor-novakovic-diploma/LineData/"
-        line_data_dir      = os.listdir(line_data_location)
+        line_data_location = (
+            "/home/tibor/Programming/bachelors/tibor-novakovic-diploma/LineData/"
+        )
+        line_data_dir = os.listdir(line_data_location)
     else:
         plot_metrics = True
-        metrics_data_location = "/home/tibor/Programming/bachelors/tibor-novakovic-diploma/MetricsData/"
-        metrics_data_dir      = os.listdir(metrics_data_location)
+        metrics_data_location = (
+            "/home/tibor/Programming/bachelors/tibor-novakovic-diploma/MetricsData/"
+        )
+        metrics_data_dir = os.listdir(metrics_data_location)
 
 # -------------------------------------------------------------------------------- #
 
 # ~  Function definitions
+
 
 def count_file_lines(filename):
     return int(check_output(["wc", "-l", filename]).split()[0])
@@ -55,7 +60,7 @@ def line_data_to_array():
         f = os.path.join(line_data_location, file)
         if os.path.isfile(f):
             file_lines = count_file_lines(f)
-            data_file = open(f, 'r')
+            data_file = open(f, "r")
             for datapoint in data_file:
                 tmp.append(float(datapoint))
 
@@ -87,7 +92,7 @@ def metrics_data_to_array():
 
 def normalize_array(array):
     max_lmnt = np.max(np.abs(array))
-    return ( array / max_lmnt )
+    return array / max_lmnt
 
 
 # -------------------------------------------------------------------------------- #
@@ -128,7 +133,6 @@ if plot_metrics:
 # ~  Plot rewards
 
 else:
-
     # Mean of lines
     if plot_normalized:
         lines_mean = np.mean(normalized_lines, axis=0)
@@ -143,7 +147,7 @@ else:
     # else:
     #     for line in lines:
     #         plt.plot(line)
-    
+
     # Standard deviation
     if plot_normalized:
         lines_stddev = np.std(normalized_lines)
@@ -154,13 +158,13 @@ else:
 
     threshold_line_norm = 195.0 / np.max(np.max(lines, axis=0))
     if plot_normalized:
-        plt.plot([0, 2000], [threshold_line_norm, threshold_line_norm], 'k-', lw=1)
+        plt.plot([0, 2000], [threshold_line_norm, threshold_line_norm], "k-", lw=1)
     else:
-        plt.plot([0, 2000], [195, 195], 'k-', lw=1)
+        plt.plot([0, 2000], [195, 195], "k-", lw=1)
 
-    plt.xlabel('Episodes')
-    plt.ylabel('Reward')
-    plt.title('Mean reward growth during training')
+    plt.xlabel("Episodes")
+    plt.ylabel("Reward")
+    plt.title("Mean reward growth during training")
 
 
 plt.show()

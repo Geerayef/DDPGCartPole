@@ -66,7 +66,9 @@ class Canvas:
         ry = mx * sin + my * cos
         return rx + anchor_x, ry + anchor_y
 
-    def draw_rectangle(self, position_from, position_to, color, anchor=(0, 0), rotation=0):
+    def draw_rectangle(
+        self, position_from, position_to, color, anchor=(0, 0), rotation=0
+    ):
         (x0, y0) = position_from
         (x1, y1) = position_to
         if rotation == 0:
@@ -94,6 +96,7 @@ class Canvas:
             sx, sy = self.to_screen((rx, ry))
         sx = int(sx)
         sy = int(sy)
+
         sr = int(round(radius * self.ppm))
         pygame.gfxdraw.aacircle(self.surface, sx, sy, sr, color)
         pygame.gfxdraw.filled_circle(self.surface, sx, sy, sr, color)
@@ -119,7 +122,7 @@ class Canvas:
         points = [
             self.to_screen((p0x, p0y)),
             self.to_screen((p1x, p1y)),
-            self.to_screen((p2x, p2y))
+            self.to_screen((p2x, p2y)),
         ]
         pygame.gfxdraw.aapolygon(self.surface, points, color)
         pygame.gfxdraw.filled_polygon(self.surface, points, color)

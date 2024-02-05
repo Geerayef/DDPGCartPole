@@ -11,11 +11,20 @@ from util.gaussian import GaussianNoise
 
 class DDPG:
     def __init__(
-            self, num_inputs, num_outputs, seed,
-            tau, gamma, batch_size, memory_size,
-            noise_decay, my_ou,
-            actor_layers, critic_layers,
-            actor_lr, critic_lr
+        self,
+        num_inputs,
+        num_outputs,
+        seed,
+        tau,
+        gamma,
+        batch_size,
+        memory_size,
+        noise_decay,
+        my_ou,
+        actor_layers,
+        critic_layers,
+        actor_lr,
+        critic_lr,
     ):
         assert num_inputs > 0
         assert num_outputs > 0
@@ -37,38 +46,39 @@ class DDPG:
         np.random.seed(seed)
 
         if my_ou == 0:
-            self.gauss = GaussianNoise(num_outputs, (3 * noise_decay)/4)
+            self.gauss = GaussianNoise(num_outputs, (3 * noise_decay) / 4)
         elif my_ou == 1:
             self.myOUNoise = OUNoise(action_space_size=1, decay_period=noise_decay)
         elif my_ou == 2:
             self.OU = common.ornstein_uhlenbeck_process(
-                    initial_value=0.0,
-                    damping=0.15,
-                    stddev=0.2,
-                    seed=np.random.normal(),
-                    scope='ornstein_uhlenbeck_noise'
-                    )
+                initial_value=0.0,
+                damping=0.15,
+                stddev=0.2,
+                seed=np.random.normal(),
+                scope="ornstein_uhlenbeck_noise",
+            )
 
         # Construct the actor.
         self.actor = Sequential()
         self.actor.add(Dense(actor_layers[0], input_shape=(num_inputs,)))
         for i in range(1, len(actor_layers)):
-            self.actor.add(Activation('relu'))
+            self.actor.add(Activation("relu"))
             self.actor.add(Dense(actor_layers[i]))
-        self.actor.add(Activation('relu'))
+        self.actor.add(Activation("relu"))
         self.actor.add(Dense(num_outputs))
-        self.actor.add(Activation('tanh'))
+        self.actor.add(Activation("tanh"))
 
         # Construct the critic.
         self.critic = Sequential()
         self.critic.add(
-            Dense(critic_layers[0], input_shape=(num_inputs + num_outputs,)))
+            Dense(critic_layers[0], input_shape=(num_inputs + num_outputs,))
+        )
         for i in range(1, len(critic_layers)):
-            self.critic.add(Activation('relu'))
+            self.critic.add(Activation("relu"))
             self.critic.add(Dense(critic_layers[i]))
-        self.critic.add(Activation('relu'))
+        self.critic.add(Activation("relu"))
         self.critic.add(Dense(1))
-        self.critic.add(Activation('linear'))
+        self.critic.add(Activation("linear"))
 
         # Clone the actor and the critic as their target models.
         self.target_actor = clone_model(self.actor)
@@ -84,7 +94,7 @@ class DDPG:
         self._previous_state = []
 
     def action(self, state, ep_count):
-        action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0] 
+        action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0]
 
         if ep_count > self._episode_counter:
             self._episode_counter += 1
@@ -102,11 +112,14 @@ class DDPG:
     def feed(self, action, reward, new_state):
         if self._previous_state != []:
             if len(self._memory) < self._memory_size:
-                self._memory.append(
-                    (self._previous_state, action, reward, new_state))
+                self._memory.append((self._previous_state, action, reward, new_state))
             else:
                 self._memory[self._memory_index] = (
-                    self._previous_state, action, reward, new_state)
+                    self._previous_state,
+                    action,
+                    reward,
+                    new_state,
+                )
             self._memory_index = (self._memory_index + 1) % self._memory_size
 
         self._previous_state = new_state
@@ -121,7 +134,9 @@ class DDPG:
         reward_batch = []
         next_state_batch = []
 
-        for (state, action, reward, next_state) in random.sample(self._memory, self._batch_size):
+        for state, action, reward, next_state in random.sample(
+            self._memory, self._batch_size
+        ):
             state_batch.append(state)
             action_batch.append(action)
             reward_batch.append([reward])
@@ -134,31 +149,51 @@ class DDPG:
 
         # Train the critic.
         with tf.GradientTape() as tape:
-            critic_values = self.critic(tf.concat([state_batch, action_batch], axis=1), training=True)
-            target_critic_values = reward_batch + self._gamma * self.target_critic(
-                tf.concat([next_state_batch, self.target_actor(next_state_batch)], axis=1)
+            critic_values = self.critic(
+                tf.concat([state_batch, action_batch], axis=1), training=True
             )
-            critic_loss = tf.math.reduce_mean(tf.math.square(target_critic_values - critic_values))
-            critic_gradients = tape.gradient(critic_loss, self.critic.trainable_variables)
-            self.critic_optimizer.apply_gradients(zip(critic_gradients, self.critic.trainable_variables))
+            target_critic_values = reward_batch + self._gamma * self.target_critic(
+                tf.concat(
+                    [next_state_batch, self.target_actor(next_state_batch)], axis=1
+                )
+            )
+            critic_loss = tf.math.reduce_mean(
+                tf.math.square(target_critic_values - critic_values)
+            )
+            critic_gradients = tape.gradient(
+                critic_loss, self.critic.trainable_variables
+            )
+            self.critic_optimizer.apply_gradients(
+                zip(critic_gradients, self.critic.trainable_variables)
+            )
 
         if self._episode_counter % 2 == 0:
             # Train the actor.
             with tf.GradientTape() as tape:
                 critic_values = self.critic(
                     tf.concat(
-                        [state_batch, self.actor(state_batch, training=True)], axis=1), training=True
-                        )
+                        [state_batch, self.actor(state_batch, training=True)], axis=1
+                    ),
+                    training=True,
+                )
                 actor_loss = -tf.math.reduce_mean(critic_values)
-                actor_gradients = tape.gradient(actor_loss, self.actor.trainable_variables)
-                self.actor_optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_variables))
+                actor_gradients = tape.gradient(
+                    actor_loss, self.actor.trainable_variables
+                )
+                self.actor_optimizer.apply_gradients(
+                    zip(actor_gradients, self.actor.trainable_variables)
+                )
 
             # Soft update actor
-            for (a, b) in zip(self.target_actor.trainable_variables, self.actor.trainable_variables):
+            for a, b in zip(
+                self.target_actor.trainable_variables, self.actor.trainable_variables
+            ):
                 a.assign(self._tau * b + (1 - self._tau) * a)
 
             # Soft update critic
-            for (a, b) in zip(self.target_critic.trainable_variables, self.critic.trainable_variables):
+            for a, b in zip(
+                self.target_critic.trainable_variables, self.critic.trainable_variables
+            ):
                 a.assign(self._tau * b + (1 - self._tau) * a)
 
     def update_target_networks(self):
@@ -167,11 +202,15 @@ class DDPG:
 
     def soft_update_target_networks(self):
         # Soft update actor
-        for (a, b) in zip(self.target_actor.trainable_variables, self.actor.trainable_variables):
+        for a, b in zip(
+            self.target_actor.trainable_variables, self.actor.trainable_variables
+        ):
             a.assign(self._tau * b + (1 - self._tau) * a)
 
         # Soft update critic
-        for (a, b) in zip(self.target_critic.trainable_variables, self.critic.trainable_variables):
+        for a, b in zip(
+            self.target_critic.trainable_variables, self.critic.trainable_variables
+        ):
             a.assign(self._tau * b + (1 - self._tau) * a)
 
     def load_weights(self, filename):

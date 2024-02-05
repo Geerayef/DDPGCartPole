@@ -45,7 +45,6 @@ def cartpole_simulator():
         scenery.tick(dt / 1000.0)
 
         for event in pygame.event.get():
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     scenery.key_pressed("left")
@@ -71,7 +70,12 @@ def cartpole_simulator():
                         (width, height) = font.size(msg)
                         text = font.render(msg, True, (255, 255, 255))
                         surface.blit(
-                            text, ((surface.get_width() - width) / 2, (surface.get_height() - height) / 2))
+                            text,
+                            (
+                                (surface.get_width() - width) / 2,
+                                (surface.get_height() - height) / 2,
+                            ),
+                        )
                         pygame.display.update()
                         scenery.convert_recording(filename)
                 elif event.key == pygame.K_ESCAPE:
@@ -125,5 +129,5 @@ def cartpole_simulator():
     pygame.quit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cartpole_simulator()

@@ -106,14 +106,16 @@ class Cart:
         #     self.theta -= 360
 
         self.terminated = bool(
-                self.position[0] > self.position_range
-                or self.position[0] < -self.position_range
-                or self.theta > self.theta_threshold
-                or self.theta < -self.theta_threshold
-                or steps > self._max_steps
+            self.position[0] > self.position_range
+            or self.position[0] < -self.position_range
+            or self.theta > self.theta_threshold
+            or self.theta < -self.theta_threshold
+            or steps > self._max_steps
         )
         if TRACE and self.terminated:
-            print(f"~~~~~ TERMINATED - position: {self.position[0]}; Angle: {self.theta}")
+            print(
+                f"~~~~~ TERMINATED - position: {self.position[0]}; Angle: {self.theta}"
+            )
 
     def draw(self, canvas):
         (x, y) = self.position
@@ -123,10 +125,7 @@ class Cart:
         y0 = y + wheel + self.width / 6
         x1 = x0 + pole
         y1 = y0 + self.pole_length
-        canvas.draw_rectangle(
-                (x0, y0), (x1, y1),
-                (64, 32, 32), (x, y0), self.theta
-                )
+        canvas.draw_rectangle((x0, y0), (x1, y1), (64, 32, 32), (x, y0), self.theta)
         canvas.draw_circle((x, y0 - 0.5 * pole), 1.2 * pole, (128, 0, 0))
         canvas.draw_circle((x, y1), 1.5 * pole, (0, 0, 0), (x, y0), self.theta)
 

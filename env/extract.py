@@ -11,7 +11,7 @@ def read_float(f):
     return value, False
 
 
-def extract(filename="", time_step = 0.5):
+def extract(filename="", time_step=0.5):
     if filename == "":
         filename = filedialog.askopenfilename()
     if filename == "" or not os.path.isfile(filename):
@@ -56,6 +56,6 @@ def extract(filename="", time_step = 0.5):
     fout_txt.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Tk().withdraw()
     extract()

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class GaussianNoise:
     def __init__(self, action_space, noise_decay, mu=0.0, sigma=1.0):
         self.mu = mu
@@ -16,6 +17,5 @@ class GaussianNoise:
 
     def reset(self):
         self.ep_count += 1
-        self.sigma = self.initial_sigma * ( 1 - ( self.ep_count / self.decay_rate ) )
+        self.sigma = self.initial_sigma * (1 - (self.ep_count / self.decay_rate))
         self.sigma = max(self.sigma, 0.01)
-

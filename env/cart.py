@@ -3,16 +3,16 @@ from util.flags import TRACE
 
 
 class Cart:
+    # Cart
     width = 1.0
     cart_weight = 10.0
-    pole_weight = 1.0
-    pole_length = 1.0
-    # Cart
     position = (0.0, 0.0)
     position_range = 3.0
     speed = 0.0
     acceleration = 0.0
     # Pole
+    pole_weight = 1.0
+    pole_length = 1.0
     theta = 0.0
     theta_speed = 0.0
     theta_acceleration = 0.0
@@ -89,7 +89,7 @@ class Cart:
 
         if TRACE:
             print(f"~~~~~ DT {dt}")
-            print(f"~~~~~ New Cart Position: {self.position[0]}")
+            print(f"~~~~~ New cart position: {self.position[0]}")
 
         a = self.acceleration / self.pole_length * cos
         b = g / self.pole_length * sin
@@ -98,12 +98,6 @@ class Cart:
         )
         self.theta_speed += self.theta_acceleration * dt
         self.theta += self.theta_speed * dt
-        # if self.theta < 180:
-        #     self.theta += 360
-        #     print(f"~~~~~ ADD 360")
-        # if self.theta >= 180:
-        #     print(f"~~~~~ SUBTRACT 360")
-        #     self.theta -= 360
 
         self.terminated = bool(
             self.position[0] > self.position_range

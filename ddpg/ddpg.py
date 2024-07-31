@@ -4,7 +4,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, clone_model
 from tensorflow.keras.layers import Dense, Activation
 from tensorflow.keras.optimizers import Adam
-from tf_agents.utils import common
+
+# from tf_agents.utils import common
 from util.ornstein_uhlenbeck import OUNoise
 from util.gaussian import GaussianNoise
 
@@ -45,18 +46,19 @@ class DDPG:
         tf.random.set_seed(seed)
         np.random.seed(seed)
 
+        self._my_ou = my_ou
         if my_ou == 0:
             self.gauss = GaussianNoise(num_outputs, (3 * noise_decay) / 4)
         elif my_ou == 1:
-            self.myOUNoise = OUNoise(action_space_size=1, decay_period=noise_decay)
-        elif my_ou == 2:
-            self.OU = common.ornstein_uhlenbeck_process(
-                initial_value=0.0,
-                damping=0.15,
-                stddev=0.2,
-                seed=np.random.normal(),
-                scope="ornstein_uhlenbeck_noise",
-            )
+            self.myOU = OUNoise(action_space_size=1, decay_period=noise_decay)
+        #        elif my_ou == 2:
+        #            self.OU = common.ornstein_uhlenbeck_process(
+        #                initial_value=0.0,
+        #                damping=0.15,
+        #                stddev=0.2,
+        #                seed=np.random.normal(),
+        #                scope="ornstein_uhlenbeck_noise",
+        #            )
 
         # Construct the actor.
         self.actor = Sequential()
@@ -95,18 +97,20 @@ class DDPG:
 
     def action(self, state, ep_count):
         action = self.actor(tf.convert_to_tensor([state], dtype=tf.float32)).numpy()[0]
-
         if ep_count > self._episode_counter:
             self._episode_counter += 1
-            self.gauss.reset()
-
+            if self._my_ou == 0:
+                self.gauss.reset()
+            if self._my_ou == 1:
+                self.myOU.reset()
         for i in range(len(action)):
             action[i] = np.clip(action[i], -1, 1)
             # action[i] += self.OU.__call__()
-            # action[i] = self.myOUNoise.get_action(action[i], ep_count)
-            action[i] += self.gauss.noise()
+            if self._my_ou == 0:
+                action[i] += self.gauss.noise()
+            if self._my_ou == 1:
+                action[i] += self.myOU.noise(action[i], ep_count)
             action[i] = np.clip(action[i], -1, 1)
-
         return action
 
     def feed(self, action, reward, new_state):

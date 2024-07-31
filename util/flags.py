@@ -2,3 +2,4 @@ TRACE = False
 RECORD = False
 SAVE_NEW_WEIGHTS = False
 PREFILL_MEMORY = False
+DEMO = False

@@ -1,14 +1,15 @@
-import os
-import struct
 import copy
 import glob
-import subprocess
-import pygame
-import numpy as np
 import math
+import os
+import struct
+import subprocess
+
+import numpy as np
+import pygame
+
 from .canvas import Canvas
 from .cart import Cart
-from util.flags import TRACE
 
 
 class Scenery:
@@ -48,17 +49,14 @@ class Scenery:
 
     def get_reward(self, state, terminated, steps, action):
         position, velocity, angle, angular_velocity = state
-
         # a = abs(angular_velocity)
         # self._max_ang_velo = a if a > self._max_ang_velo else self._max_ang_velo
         # ang_velo_norm = abs(angular_velocity) / self._max_ang_velo
         # swing_speed = self.sigmoid(ang_velo_norm)
-
         # time = steps / self._max_steps
         upright = 1 - abs(angle) / self._cart.theta_threshold
         # upright = np.cos(np.radians(abs(angle)))
         centred = 1 - abs(position) / self._cart.position_range
-
         reward = (0.5 * upright) + (0.5 * centred)
         return -1 if terminated else reward
 
@@ -132,7 +130,6 @@ class Scenery:
     def tick(self, time, steps):
         if self._frozen:
             self._frozen = False
-
         if not self._frozen:
             self._cart.tick(
                 self._action * self._manual_force, self.gravity, time, steps
@@ -151,14 +148,12 @@ class Scenery:
         active_canvas = canvas
         if active_canvas is None:
             active_canvas = self._canvas
-
         active_canvas.surface.fill((64, 128, 128))
         x0, y0 = active_canvas.to_canvas((0, 0))
         x1, y1 = active_canvas.to_canvas(active_canvas.get_size())
         active_canvas.draw_rectangle((-0.02, 0), (0.02, y0), (192, 192, 192))
         active_canvas.draw_rectangle((x0, 0), (x1, y1), (32, 32, 32))
         self._cart.draw(active_canvas)
-
         if self._action != 0:
             width = self._cart.width / 5.0
             bumpers = self._cart.get_bumpers()

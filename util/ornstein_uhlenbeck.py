@@ -8,7 +8,7 @@ class OUNoise:
         decay_period,
         mu=0.0,
         theta=0.1,
-        max_sigma=0.35,
+        max_sigma=0.3,
         min_sigma=0.05,
     ):
         self.mu = mu
@@ -18,8 +18,8 @@ class OUNoise:
         self.min_sigma = min_sigma
         self.decay_period = decay_period
         self.action_dim = action_space_size
-        self.low = -0.5
-        self.high = 0.5
+        self.low = -1
+        self.high = 1
         self.reset()
 
     def reset(self):
@@ -34,7 +34,7 @@ class OUNoise:
         )
         return self.state
 
-    def get_action(self, action, time):
+    def noise(self, action, time):
         self.time = time
-        ou_state = self.evolve_state()
-        return np.clip(action + ou_state, self.low, self.high)
+        # return self.evolve_state()
+        return np.clip(self.evolve_state(), self.low, self.high)

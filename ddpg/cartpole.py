@@ -7,16 +7,13 @@ from env.scenery import Scenery
 from util.flags import TRACE, RECORD, SAVE_NEW_WEIGHTS, PREFILL_MEMORY
 
 
-# ~  Constants
+# ~ Constants
 MAX_STEPS = 500
 EPISODES = 2000
 MEMORY_SIZE = 65536
 WINDOW_DIM = (1000, 300)
 
-
-# -------------------------------------------------------------------------------- #
-
-# ~  Util Functions
+# ~ Util -------------------------------------------------------------------- ~ #
 
 
 def handle_recording():
@@ -54,16 +51,13 @@ def init_simulator(clock, surface, font):
     clock = pygame.time.Clock()
     pygame.display.set_caption("Cart-pole simulator")
     surface = pygame.display.set_mode(WINDOW_DIM)
-
     Tk().withdraw()
-
     if pygame.font.match_font("Monospace", True):
         font = pygame.font.SysFont("Monospace", 20, True)
     elif pygame.font.match_font("Courier New", True):
         font = pygame.font.SysFont("Courier New", 20, True)
     else:
         font = pygame.font.Font(None, 20)
-
     return clock, surface, font
 
 
@@ -79,25 +73,19 @@ def fill_memory(memory_size, scenery, agent, clock):
         scenery.tick(dt / 1000.0, j)
         x, y, terminated = scenery.post_tick(j, action)
         agent.feed(action, y, x)
-
         j += 1
         if terminated:
             i += 1
             j = 0
             scenery.reset()
             x = scenery.get_current_state()
-
         clock.tick(50)
-
     scenery.reset()
     print(f"~~~~~ Memory filled: {len(agent._memory)}")
-
     return scenery, agent
 
 
-# -------------------------------------------------------------------------------- #
-
-# ~  Simulator
+# ~ Simulator --------------------------------------------------------------- ~ #
 
 pygame.init()
 
@@ -109,9 +97,7 @@ else:
     clock = pygame.time.Clock()
     pygame.display.set_caption("Cart-pole simulator")
     surface = pygame.display.set_mode(WINDOW_DIM)
-
     Tk().withdraw()
-
     if pygame.font.match_font("Monospace", True):
         font = pygame.font.SysFont("Monospace", 20, True)
     elif pygame.font.match_font("Courier New", True):
@@ -126,9 +112,7 @@ frame_count = 0
 avg_fps = 0
 
 
-# -------------------------------------------------------------------------------- #
-
-# ~  Algorithm
+# ~ Algorithm --------------------------------------------------------------- ~ #
 
 
 def new_ddpg():
@@ -141,7 +125,7 @@ def new_ddpg():
         batch_size=256,
         memory_size=MEMORY_SIZE,
         noise_decay=EPISODES,
-        my_ou=0,  # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
+        my_ou=1,  # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
         actor_layers=[128, 32],
         critic_layers=[128, 32],
         actor_lr=0.0002,
@@ -155,7 +139,7 @@ episode_steps = 0
 repetitions = 1
 n = 0
 
-# Metrics
+# ~ Metrics
 ep_reward = 0
 rewards_episodes = np.zeros(EPISODES)
 rewards_avg_step = rewards_episodes
@@ -164,41 +148,32 @@ ep_pos = 0
 angle_avg_episodes = rewards_episodes
 ep_angle = 0
 
-
-# ~  Agent
-
+# ~ Agent
 agent = new_ddpg()
 
-# ~  Fill memory before training
-
+# ~ Fill memory before training
 if PREFILL_MEMORY:
     clock, surface, font = init_simulator(clock, surface, font)
     scenery = Scenery(MAX_STEPS, surface)
     scenery.reset()
     state = scenery.get_current_state()
-
     scenery, agent = fill_memory(MEMORY_SIZE, scenery, agent, clock)
-    print("~~~~~ Resetting environment for training with full memory")
+    print("~~~~~ [DONE] Prefill memory: Reset environment for training.")
 
-# ~  Set up for training
-
+# ~ Set up for training
 scenery = Scenery(MAX_STEPS, surface)
 scenery.reset()
 state = scenery.get_current_state()
 if TRACE:
     print(f"~~~~~ Initial state: {state}")
-
 if agent.load_weights("cartpole-model"):
     print("~~~~~ Weights loaded")
 
 
-# -------------------------------------------------------------------------------- #
-
-# ~  Main Loop
+# ~ Main -------------------------------------------------------------------- ~ #
 
 while run:
     pygame.event.pump()
-
     dt = clock.get_time()
     frame_count += 1
     sum_dt += dt
@@ -210,49 +185,38 @@ while run:
         sum_fps = 0
         frame_count = 0
         sum_dt = 0
-
     # ~  Main algorithm
     action = agent.action(state, episodes_count)
-
     scenery._apply_action(action[0])
     scenery.tick(dt / 1000.0, episode_steps)
     state, step_reward, terminated = scenery.post_tick(episode_steps, action)
-
     agent.feed(action, step_reward, state)
     agent.train()
-
     ep_reward += step_reward
     ep_pos += state[0]
     ep_angle += state[2]
     episode_steps += 1
-
     scenery.draw()
-
     if terminated:
         rewards_episodes[episodes_count] += ep_reward
         rewards_avg_step[episodes_count] += ep_reward / episode_steps
         pos_avg_episodes[episodes_count] += ep_pos / episode_steps
         angle_avg_episodes[episodes_count] += ep_angle / episode_steps
-
         episodes_count += 1
         # agent.episode_counter = episodes_count
         episode_steps = 0
         ep_reward = 0
         ep_pos = 0
         ep_angle = 0
-
         scenery.reset()
         state = scenery.get_current_state()
-
         if episodes_count >= EPISODES:
             n += 1
             if n >= repetitions:
                 break
-
             print(f"~~~~~ Repetition {n}")
             agent = new_ddpg()
             episodes_count = 0
-
     # text = font.render("Max reward: %.1f" % np.max(rewards_episodes), True, (255, 255, 255))
     # surface.blit(text, (775, 5))
     # text = font.render("Ep. reward: %.1f" % rewards_episodes[episodes_count - 1], True, (255, 255, 255))
@@ -273,33 +237,29 @@ while run:
         text = font.render(msg, True, color)
         surface.blit(text, (surface.get_width() - width - 5, text_y))
         text_y += height
-
     pygame.display.update()
-
     if RECORD:
         handle_recording()
-
     if TRACE:
         print(f"~~~~~ Action to apply   : {action}")
         print(f"~~~~~ Episode reward    : {ep_reward}")
         print(f"~~~~~ Action post apply : {scenery._action}")
         print(f"~~~~~ State after tick  : {state}")
-
     clock.tick(50)
     time.sleep(0.02)
 
 pygame.quit()
 
-# print("~~~~~ DONE ~~~~~")
-# print("~~~~~ Rewards per episode")
-# print("~~~~~ Start of results:")
-# for i in range(EPISODES):
-#     print(rewards_episodes[i])
-# print("~~~~~ End of results.")
+print("~~~~~ DONE ~~~~~")
+print("~~~~~ Rewards per episode")
+print("~~~~~ Start of results:")
+for i in range(EPISODES):
+    print(rewards_episodes[i])
+print("~~~~~ End of results.")
 
-np.save("reward_step.npy", rewards_avg_step)
-np.save("pos_avg.npy", pos_avg_episodes)
-np.save("angle_avg.npy", angle_avg_episodes)
+np.save("MetricsData/reward_step.npy", rewards_avg_step)
+np.save("MetricsData/pos_avg.npy", pos_avg_episodes)
+np.save("MetricsData/angle_avg.npy", angle_avg_episodes)
 
 if SAVE_NEW_WEIGHTS:
     agent.save_weights("cartpole-model")

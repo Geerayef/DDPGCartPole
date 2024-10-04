@@ -1,5 +1,5 @@
 TRACE = False
 RECORD = False
-SAVE_NEW_WEIGHTS = False
+SAVE_NEW_WEIGHTS = True
 PREFILL_MEMORY = False
 DEMO = False

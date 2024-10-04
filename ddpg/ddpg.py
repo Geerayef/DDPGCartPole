@@ -1,13 +1,15 @@
 import random
+
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.layers import Activation, Dense
 from tensorflow.keras.models import Sequential, clone_model
-from tensorflow.keras.layers import Dense, Activation
 from tensorflow.keras.optimizers import Adam
+
+from util.gaussian import GaussianNoise
 
 # from tf_agents.utils import common
 from util.ornstein_uhlenbeck import OUNoise
-from util.gaussian import GaussianNoise
 
 
 class DDPG:
@@ -46,11 +48,14 @@ class DDPG:
         tf.random.set_seed(seed)
         np.random.seed(seed)
 
+        if 
         self._my_ou = my_ou
         if my_ou == 0:
             self.gauss = GaussianNoise(num_outputs, (3 * noise_decay) / 4)
         elif my_ou == 1:
             self.myOU = OUNoise(action_space_size=1, decay_period=noise_decay)
+        elif my_OU == 3: 
+            self.no_noise = 0
         #        elif my_ou == 2:
         #            self.OU = common.ornstein_uhlenbeck_process(
         #                initial_value=0.0,
@@ -110,6 +115,8 @@ class DDPG:
                 action[i] += self.gauss.noise()
             if self._my_ou == 1:
                 action[i] += self.myOU.noise(action[i], ep_count)
+            if self._my_ou == 3:
+                action[i] += self.no_noise
             action[i] = np.clip(action[i], -1, 1)
         return action
 
@@ -219,14 +226,14 @@ class DDPG:
 
     def load_weights(self, filename):
         try:
-            self.actor.load_weights(filename + "-actor.h5")
-            self.critic.load_weights(filename + "-critic.h5")
-            self.target_actor.load_weights(filename + "-actor.h5")
-            self.target_critic.load_weights(filename + "-critic.h5")
+            self.actor.load_weights(filename + "-actor.weights.h5")
+            self.critic.load_weights(filename + "-critic.weights.h5")
+            self.target_actor.load_weights(filename + "-actor.weights.h5")
+            self.target_critic.load_weights(filename + "-critic.weights.h5")
             return True
         except:
             return False
 
     def save_weights(self, filename):
-        self.actor.save_weights(filename + "-actor.h5")
-        self.critic.save_weights(filename + "-critic.h5")
+        self.actor.save_weights(filename + "-actor.weights.h5")
+        self.critic.save_weights(filename + "-critic.weights.h5")

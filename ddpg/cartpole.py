@@ -1,15 +1,17 @@
-import pygame
-import numpy as np
 import time
-from tkinter import filedialog, Tk
-from .ddpg import DDPG
-from env.scenery import Scenery
-from util.flags import TRACE, RECORD, SAVE_NEW_WEIGHTS, PREFILL_MEMORY
+from tkinter import Tk, filedialog
 
+import numpy as np
+import pygame
+
+from env.scenery import Scenery
+from util.flags import PREFILL_MEMORY, RECORD, SAVE_NEW_WEIGHTS, TRACE, DEMO
+
+from .ddpg import DDPG
 
 # ~ Constants
 MAX_STEPS = 500
-EPISODES = 2000
+EPISODES = 1500
 MEMORY_SIZE = 65536
 WINDOW_DIM = (1000, 300)
 
@@ -116,6 +118,12 @@ avg_fps = 0
 
 
 def new_ddpg():
+    # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
+    if DEMO:
+        noise = 3
+    else:
+        noise = 0
+
     return DDPG(
         num_inputs=4,
         num_outputs=1,
@@ -125,7 +133,7 @@ def new_ddpg():
         batch_size=256,
         memory_size=MEMORY_SIZE,
         noise_decay=EPISODES,
-        my_ou=1,  # 0 - Gauss, 1 - My OU, 2 - tf-agents OU
+        my_ou=noise,
         actor_layers=[128, 32],
         critic_layers=[128, 32],
         actor_lr=0.0002,
@@ -165,9 +173,9 @@ scenery = Scenery(MAX_STEPS, surface)
 scenery.reset()
 state = scenery.get_current_state()
 if TRACE:
-    print(f"~~~~~ Initial state: {state}")
+    print(f"~~~~~ [TRACE] Initial state: {state}")
 if agent.load_weights("cartpole-model"):
-    print("~~~~~ Weights loaded")
+    print("~~~~~ [INFO] Weights loaded.")
 
 
 # ~ Main -------------------------------------------------------------------- ~ #
@@ -250,6 +258,9 @@ while run:
 
 pygame.quit()
 
+if SAVE_NEW_WEIGHTS:
+    agent.save_weights("cartpole-model")
+
 print("~~~~~ DONE ~~~~~")
 print("~~~~~ Rewards per episode")
 print("~~~~~ Start of results:")
@@ -260,6 +271,3 @@ print("~~~~~ End of results.")
 np.save("MetricsData/reward_step.npy", rewards_avg_step)
 np.save("MetricsData/pos_avg.npy", pos_avg_episodes)
 np.save("MetricsData/angle_avg.npy", angle_avg_episodes)
-
-if SAVE_NEW_WEIGHTS:
-    agent.save_weights("cartpole-model")
